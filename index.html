@@ -3,133 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KUS Compass — ระบบแนะแนวการศึกษา</title>
+<title>KUS Compass</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Sarabun',sans-serif;background:#0f0d1a;color:#fff;min-height:100vh;}
-  #root{min-height:100vh;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Sarabun',sans-serif;background:#0f0d1a;color:#fff;min-height:100vh;overflow-x:hidden;}
+#root{min-height:100vh;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
+const {useState,useEffect,useRef} = React;
 
-const GROQ_KEY = 'YOUR_GROQ_KEY_HERE';
+const GROQ_KEY  = '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';
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyBVdS7D6qMUKCacdljclXIksFgVHYKGkVRRG9xY8Te6yGA0bpAyIFJ8jZhFZTFaoD5/exec';
 
-const SUBJECTS = ['คณิตศาสตร์','ฟิสิกส์','เคมี','ชีววิทยา','คอมพิวเตอร์','ภาษาอังกฤษ','ภาษาไทย','สังคมศึกษา','ประวัติศาสตร์','ศิลปะ','ดนตรี','พลศึกษา','เศรษฐศาสตร์','จิตวิทยา'];
+/* ─── Holland RIASEC questions ─── */
+const RIASEC_Q = [
+  {id:'R1',type:'R',text:'ฉันชอบซ่อมแซมหรือสร้างสิ่งของด้วยมือ'},
+  {id:'R2',type:'R',text:'ฉันชอบทำกิจกรรมกลางแจ้งและใช้ร่างกาย'},
+  {id:'I1',type:'I',text:'ฉันชอบวิเคราะห์ข้อมูลและหาคำตอบจากหลักฐาน'},
+  {id:'I2',type:'I',text:'ฉันชอบทดลองและตั้งสมมติฐานเพื่อพิสูจน์'},
+  {id:'A1',type:'A',text:'ฉันชอบสร้างสรรค์งานศิลปะ ดนตรี หรือเขียนเรื่อง'},
+  {id:'A2',type:'A',text:'ฉันชอบแสดงออกและคิดนอกกรอบ'},
+  {id:'S1',type:'S',text:'ฉันชอบช่วยเหลือและพูดคุยกับผู้อื่น'},
+  {id:'S2',type:'S',text:'ฉันชอบสอนหรืออธิบายให้คนอื่นเข้าใจ'},
+  {id:'E1',type:'E',text:'ฉันชอบโน้มน้าวและนำทีมให้บรรลุเป้าหมาย'},
+  {id:'E2',type:'E',text:'ฉันชอบวางแผนธุรกิจและการขาย'},
+  {id:'C1',type:'C',text:'ฉันชอบจัดระเบียบข้อมูลและทำงานตามขั้นตอน'},
+  {id:'C2',type:'C',text:'ฉันชอบความถูกต้อง แม่นยำ และทำตามกฎ'},
+];
+const RIASEC_LABEL = {R:'Realistic (ช่างฝีมือ)',I:'Investigative (นักวิจัย)',A:'Artistic (ศิลปิน)',S:'Social (นักสังคม)',E:'Enterprising (ผู้นำ)',C:'Conventional (นักจัดการ)'};
+
+const SUBJECTS   = ['คณิตศาสตร์','ฟิสิกส์','เคมี','ชีววิทยา','คอมพิวเตอร์','ภาษาอังกฤษ','ภาษาไทย','สังคมศึกษา','ประวัติศาสตร์','ศิลปะ','ดนตรี','พลศึกษา','เศรษฐศาสตร์','จิตวิทยา'];
 const ACTIVITIES = ['เขียนโปรแกรม','เล่นเกม','วาดรูป/ออกแบบ','อ่านหนังสือ','เล่นกีฬา','ดูหนัง/ซีรีส์','เล่นดนตรี','ทำอาหาร','ถ่ายภาพ','เขียน/บล็อก','ทำธุรกิจ','ทำจิตอาสา','ทดลองสิ่งใหม่','ท่องเที่ยว'];
 
-/* ── STYLES ── */
-const S = {
-  page: {minHeight:'100vh', background:'#0f0d1a'},
-  grad: {position:'fixed',inset:0,background:'radial-gradient(ellipse at 15% 20%,rgba(76,29,149,.35) 0%,transparent 55%),radial-gradient(ellipse at 85% 80%,rgba(109,40,217,.18) 0%,transparent 55%)',pointerEvents:'none',zIndex:0},
-  wrap: {position:'relative',zIndex:1,maxWidth:680,margin:'0 auto',padding:'0 20px 80px'},
-  nav:  {position:'relative',zIndex:10,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 28px',borderBottom:'1px solid rgba(212,175,80,.15)',background:'rgba(15,13,26,.8)'},
-  logo: {fontSize:18,fontWeight:800,color:'#d4af50',cursor:'pointer',textDecoration:'none'},
-  tag:  {fontSize:11,letterSpacing:3,textTransform:'uppercase',color:'#d4af50',marginBottom:10},
-  h1:   {fontSize:'clamp(28px,7vw,52px)',fontWeight:800,lineHeight:1.1,marginBottom:16},
-  h2:   {fontSize:'clamp(20px,4vw,28px)',fontWeight:800,lineHeight:1.3,marginBottom:8,color:'#f1f5f9'},
-  sub:  {color:'rgba(255,255,255,.4)',fontSize:14,lineHeight:1.6,marginBottom:24},
-  card: {background:'rgba(76,29,149,.1)',border:'1px solid rgba(212,175,80,.12)',borderRadius:16,padding:'24px 20px',marginBottom:16,transition:'border-color .2s'},
-  label:{display:'block',fontSize:13,fontWeight:600,color:'rgba(255,255,255,.7)',marginBottom:7},
-  input:{width:'100%',padding:'11px 14px',background:'rgba(255,255,255,.05)',border:'1.5px solid rgba(212,175,80,.15)',borderRadius:10,color:'#f1f5f9',fontSize:14,fontFamily:'Sarabun,sans-serif',outline:'none'},
-  sel:  {width:'100%',padding:'11px 14px',background:'rgba(30,27,46,1)',border:'1.5px solid rgba(212,175,80,.15)',borderRadius:10,color:'#f1f5f9',fontSize:14,fontFamily:'Sarabun,sans-serif',outline:'none'},
-  ta:   {width:'100%',padding:'11px 14px',background:'rgba(255,255,255,.05)',border:'1.5px solid rgba(212,175,80,.15)',borderRadius:10,color:'#f1f5f9',fontSize:14,fontFamily:'Sarabun,sans-serif',outline:'none',resize:'vertical',minHeight:90,lineHeight:1.6},
-  btnP: {display:'block',width:'100%',padding:'13px 24px',fontSize:15,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:12,background:'linear-gradient(135deg,#4c1d95,#6d28d9)',color:'#fff',cursor:'pointer'},
-  btnS: {padding:'11px 22px',fontSize:14,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:'1.5px solid rgba(212,175,80,.2)',borderRadius:10,background:'transparent',color:'rgba(212,175,80,.7)',cursor:'pointer'},
-  chips:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:8,marginTop:6},
-};
+/* ─── Compute RIASEC top types ─── */
+function computeRiasec(scores){
+  const totals={R:0,I:0,A:0,S:0,E:0,C:0};
+  RIASEC_Q.forEach(q=>{ totals[q.type]+=(scores[q.id]||0); });
+  return Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join('');
+}
 
-/* ── CHIP ── */
-function Chip({label, selected, onToggle}) {
-  return (
+/* ─── Colours ─── */
+const C={purple:'#4c1d95',mid:'#6d28d9',gold:'#d4af50',goldf:'rgba(212,175,80,',bg:'#0f0d1a'};
+
+/* ─── Chip ─── */
+function Chip({label,selected,onToggle}){
+  return(
     <div onClick={onToggle} style={{
-      display:'flex',alignItems:'center',gap:8,padding:'10px 12px',
-      border:`1.5px solid ${selected ? '#d4af50' : 'rgba(212,175,80,.12)'}`,
-      borderRadius:9,
-      background: selected ? 'rgba(76,29,149,.3)' : 'rgba(255,255,255,.03)',
-      cursor:'pointer',userSelect:'none',transition:'all .15s',
+      display:'flex',alignItems:'center',gap:8,padding:'10px 13px',
+      border:`1.5px solid ${selected?C.gold:'rgba(212,175,80,.13)'}`,
+      borderRadius:10,cursor:'pointer',userSelect:'none',
+      background:selected?'rgba(76,29,149,.32)':'rgba(255,255,255,.03)',
+      transition:'all .15s',animation:selected?'pop .2s ease':'none',
     }}>
-      <div style={{
-        width:16,height:16,borderRadius:4,flexShrink:0,
-        border:`1.5px solid ${selected ? '#d4af50' : 'rgba(255,255,255,.25)'}`,
-        background: selected ? '#6d28d9' : 'transparent',
-        display:'flex',alignItems:'center',justifyContent:'center',
-        fontSize:11,color:'#fff',transition:'all .15s',
-      }}>{selected ? '✓' : ''}</div>
-      <span style={{fontSize:13,color:'#cbd5e1'}}>{label}</span>
-    </div>
-  );
-}
-
-/* ── PROGRESS ── */
-function Progress({step}) {
-  const pct = Math.round(step/4*100);
-  return (
-    <div style={{maxWidth:680,margin:'0 auto',padding:'20px 20px 0'}}>
-      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'rgba(212,175,80,.5)',marginBottom:6}}>
-        <span>ขั้นตอน {step} จาก 4</span><span>{pct}%</span>
+      <div style={{width:16,height:16,borderRadius:4,flexShrink:0,border:`1.5px solid ${selected?C.gold:'rgba(255,255,255,.2)'}`,background:selected?C.mid:'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff'}}>
+        {selected?'✓':''}
       </div>
-      <div style={{height:4,background:'rgba(255,255,255,.08)',borderRadius:4,overflow:'hidden'}}>
-        <div style={{height:'100%',width:pct+'%',background:'linear-gradient(90deg,#4c1d95,#d4af50)',transition:'width .4s',borderRadius:4}} />
+      <span style={{fontSize:13,color:selected?'#f1f5f9':'#94a3b8'}}>{label}</span>
+    </div>
+  );
+}
+
+/* ─── RIASEC Slider ─── */
+function RiasecSlider({q,value,onChange}){
+  const labels=['ไม่เลย','น้อย','ปานกลาง','มาก','มากที่สุด'];
+  return(
+    <div style={{marginBottom:20,padding:'16px 18px',background:'rgba(76,29,149,.08)',border:'1px solid rgba(212,175,80,.1)',borderRadius:12}}>
+      <p style={{fontSize:14,color:'#e2e8f0',marginBottom:12,lineHeight:1.55}}>{q.text}</p>
+      <input type="range" min={0} max={4} step={1} value={value}
+        onChange={e=>onChange(q.id,+e.target.value)}
+        style={{width:'100%',accentColor:C.gold,cursor:'pointer',marginBottom:6}}/>
+      <div style={{display:'flex',justifyContent:'space-between'}}>
+        {labels.map((l,i)=>(
+          <span key={i} style={{fontSize:10,color:value===i?C.gold:'rgba(255,255,255,.3)',fontWeight:value===i?700:400,transition:'color .15s'}}>{l}</span>
+        ))}
       </div>
     </div>
   );
 }
 
-/* ── LOADING ── */
-function Loading() {
-  return (
-    <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(15,13,26,.97)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18}}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{width:48,height:48,border:'3px solid rgba(255,255,255,.08)',borderTopColor:'#d4af50',borderRadius:'50%',animation:'spin 1s linear infinite'}} />
-      <div style={{fontSize:16,color:'#e2e8f0'}}>AI กำลังวิเคราะห์...</div>
-      <div style={{fontSize:13,color:'rgba(255,255,255,.35)'}}>ใช้เวลาประมาณ 15-30 วินาที</div>
+/* ─── Progress ─── */
+function Progress({step,total=5}){
+  const pct=Math.round(step/total*100);
+  return(
+    <div style={{maxWidth:680,margin:'0 auto',padding:'16px 20px 0'}}>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:`${C.goldf}.5)`,marginBottom:6}}>
+        <span>ขั้นตอน {step} จาก {total}</span><span>{pct}%</span>
+      </div>
+      <div style={{height:3,background:'rgba(255,255,255,.07)',borderRadius:3,overflow:'hidden'}}>
+        <div style={{height:'100%',width:pct+'%',background:`linear-gradient(90deg,${C.purple},${C.gold})`,transition:'width .5s ease',borderRadius:3}}/>
+      </div>
+      <div style={{display:'flex',gap:6,marginTop:8}}>
+        {Array.from({length:total},(_,i)=>(
+          <div key={i} style={{flex:1,height:3,borderRadius:3,background:i<step?C.gold:'rgba(255,255,255,.08)',transition:'background .3s'}}/>
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ── HOME ── */
-function Home({onStart}) {
-  return (
-    <div style={S.page}>
-      <div style={S.grad} />
-      <nav style={S.nav}>
-        <span style={S.logo}>KUS Compass</span>
-        <span style={{padding:'6px 14px',borderRadius:999,border:'1px solid rgba(212,175,80,.3)',color:'#d4af50',fontSize:12}}>Senior Project 2026</span>
+/* ─── Loading ─── */
+function Loading(){
+  const [msg,setMsg]=useState(0);
+  const msgs=['กำลังวิเคราะห์บุคลิกภาพ RIASEC...','จับคู่กับฐานข้อมูลคณะในไทย...','สร้าง Roadmap ส่วนตัวของคุณ...','เกือบเสร็จแล้ว!'];
+  useEffect(()=>{const t=setInterval(()=>setMsg(m=>(m+1)%msgs.length),2000);return()=>clearInterval(t);},[]);
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(15,13,26,.97)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
+      <div style={{width:56,height:56,border:'3px solid rgba(212,175,80,.15)',borderTopColor:C.gold,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      <div style={{textAlign:'center'}}>
+        <div style={{fontSize:16,color:'#e2e8f0',marginBottom:6,animation:'pulse 2s ease infinite'}}>{msgs[msg]}</div>
+        <div style={{fontSize:12,color:'rgba(255,255,255,.3)'}}>วิเคราะห์ด้วย Holland RIASEC Theory</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── HOME ─── */
+function Home({onStart}){
+  return(
+    <div style={{background:C.bg,minHeight:'100vh'}}>
+      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 20% 10%,rgba(76,29,149,.4) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(109,40,217,.2) 0%,transparent 55%)',pointerEvents:'none'}}/>
+      <nav style={{position:'relative',zIndex:10,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 24px',borderBottom:'1px solid rgba(212,175,80,.15)',background:'rgba(15,13,26,.8)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${C.purple},${C.mid})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:800,color:C.gold}}>K</div>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:'#f1f5f9'}}>KUS Compass</div>
+            <div style={{fontSize:11,color:`${C.goldf}.5)`}}>สาธิตแห่งมหาวิทยาลัยเกษตรศาสตร์</div>
+          </div>
+        </div>
+        <span style={{fontSize:11,padding:'5px 12px',borderRadius:999,border:`1px solid ${C.goldf}.3)`,color:C.gold}}>Senior Project 2026</span>
       </nav>
-      <div style={{...S.wrap,textAlign:'center',paddingTop:80,paddingBottom:80}}>
-        <div style={{display:'inline-flex',alignItems:'center',gap:8,padding:'8px 20px',borderRadius:999,border:'1px solid rgba(212,175,80,.35)',background:'rgba(212,175,80,.08)',color:'#d4af50',fontSize:13,marginBottom:28}}>
+
+      <div style={{position:'relative',zIndex:1,textAlign:'center',padding:'70px 24px 60px',animation:'fadeUp .6s ease'}}>
+        <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'7px 18px',borderRadius:999,border:`1px solid ${C.goldf}.3)`,background:`${C.goldf}.07)`,color:C.gold,fontSize:13,marginBottom:24}}>
           🎓 โรงเรียนสาธิตแห่งมหาวิทยาลัยเกษตรศาสตร์
         </div>
-        <h1 style={S.h1}>
-          <span style={{background:'linear-gradient(135deg,#d4af50,#f0d060)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>KUS</span>
+        <h1 style={{fontSize:'clamp(52px,11vw,110px)',fontWeight:800,lineHeight:.95,letterSpacing:-2,marginBottom:20}}>
+          <span style={{background:`linear-gradient(135deg,${C.gold},#f0d060,#b8973a)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>KUS</span>
           <br/><span style={{color:'#f1f5f9'}}>Compass</span>
         </h1>
-        <p style={{...S.sub,maxWidth:500,margin:'0 auto 40px',fontSize:17}}>
-          ค้นพบ<strong style={{color:'rgba(255,255,255,.85)'}}>คณะและมหาวิทยาลัย</strong>ที่ใช่<br/>ด้วยการวิเคราะห์จาก AI ใน 2 นาที
+        <p style={{fontSize:'clamp(15px,2.5vw,19px)',color:'rgba(255,255,255,.5)',lineHeight:1.7,maxWidth:500,margin:'0 auto 16px'}}>
+          ค้นพบ<strong style={{color:'rgba(255,255,255,.85)'}}>คณะและมหาวิทยาลัย</strong>ที่ใช่<br/>
+          ด้วย <strong style={{color:C.gold}}>Holland RIASEC Theory</strong> + AI
         </p>
-        <button style={{...S.btnP,width:'auto',display:'inline-block',padding:'16px 48px',fontSize:17}} onClick={onStart}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:36,fontSize:12,color:'rgba(255,255,255,.3)'}}>
+          <div style={{width:6,height:6,borderRadius:'50%',background:C.gold}}/>
+          <span>อ้างอิงทฤษฎีแนะแนวอาชีพมาตรฐานสากล</span>
+        </div>
+        <button onClick={onStart} style={{padding:'15px 44px',fontSize:16,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:14,background:`linear-gradient(135deg,${C.purple},${C.mid})`,color:'#fff',cursor:'pointer',boxShadow:'0 8px 28px rgba(76,29,149,.45)',transition:'transform .2s,box-shadow .2s'}}
+          onMouseEnter={e=>{e.target.style.transform='translateY(-3px)';e.target.style.boxShadow='0 12px 36px rgba(76,29,149,.6)';}}
+          onMouseLeave={e=>{e.target.style.transform='translateY(0)';e.target.style.boxShadow='0 8px 28px rgba(76,29,149,.45)';}}>
           เริ่มค้นหาคณะของฉัน →
         </button>
-        <div style={{display:'flex',justifyContent:'center',gap:40,marginTop:60,padding:'28px 20px',border:'1px solid rgba(212,175,80,.15)',borderRadius:20,background:'rgba(76,29,149,.08)'}}>
-          {[['50+','คณะที่ครอบคลุม'],['30+','มหาวิทยาลัย'],['2 นาที','ได้ผลลัพธ์']].map(([n,l])=>(
-            <div key={l} style={{textAlign:'center'}}>
-              <div style={{fontSize:32,fontWeight:800,background:'linear-gradient(135deg,#d4af50,#f0d060)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{n}</div>
-              <div style={{fontSize:11,color:'rgba(255,255,255,.3)',letterSpacing:2,textTransform:'uppercase',marginTop:4}}>{l}</div>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,maxWidth:600,margin:'52px auto 0',padding:'20px',border:`1px solid ${C.goldf}.18)`,borderRadius:20,background:'rgba(76,29,149,.08)'}}>
+          {[['🧠','Holland RIASEC','วิเคราะห์บุคลิกภาพ'],['🎓','50+ คณะ','ครอบคลุมทั่วไทย'],['⚡','5 นาที','ได้ผลลัพธ์']].map(([ic,t,s])=>(
+            <div key={t} style={{textAlign:'center',padding:'12px 8px'}}>
+              <div style={{fontSize:22,marginBottom:6}}>{ic}</div>
+              <div style={{fontSize:14,fontWeight:700,color:'#f1f5f9',marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:`${C.goldf}.45)`}}>{s}</div>
             </div>
           ))}
         </div>
-        <div style={{marginTop:48,padding:'28px 20px',borderTop:'1px solid rgba(212,175,80,.1)',borderBottom:'1px solid rgba(212,175,80,.1)',background:'rgba(76,29,149,.06)'}}>
-          <p style={{fontSize:11,letterSpacing:3,color:'rgba(255,255,255,.25)',textTransform:'uppercase',marginBottom:10}}>คำขวัญประจำโรงเรียน</p>
-          <p style={{fontSize:'clamp(14px,2.5vw,20px)',fontWeight:700,color:'rgba(255,255,255,.65)',letterSpacing:3}}>
-            <span style={{color:'#d4af50'}}>รอบรู้</span> · <span style={{color:'#d4af50'}}>สู้ชีวิต</span> · <span style={{color:'#d4af50'}}>จิตมั่นคง</span> · <span style={{color:'#d4af50'}}>ดำรงคุณธรรม</span>
+
+        <div style={{marginTop:40,padding:'20px 24px',borderTop:`1px solid ${C.goldf}.1)`,borderBottom:`1px solid ${C.goldf}.1)`,background:'rgba(76,29,149,.05)'}}>
+          <p style={{fontSize:10,letterSpacing:3,color:'rgba(255,255,255,.2)',textTransform:'uppercase',marginBottom:8}}>คำขวัญประจำโรงเรียน</p>
+          <p style={{fontSize:'clamp(13px,2.2vw,18px)',fontWeight:700,color:'rgba(255,255,255,.6)',letterSpacing:2}}>
+            {['รอบรู้','สู้ชีวิต','จิตมั่นคง','ดำรงคุณธรรม'].map((w,i)=><span key={i}><span style={{color:C.gold}}>{w}</span>{i<3?' · ':''}</span>)}
           </p>
         </div>
       </div>
@@ -137,386 +188,341 @@ function Home({onStart}) {
   );
 }
 
-/* ── STEP 1 ── */
-function Step1({data, setData, onNext}) {
-  const toggle = (v) => {
-    const s = new Set(data.subjects);
-    s.has(v) ? s.delete(v) : s.add(v);
-    setData({...data, subjects: s});
+/* ─── FORM WRAPPER ─── */
+function FormPage({onDone,onHome}){
+  const [step,setStep]=useState(1);
+  const [loading,setLoading]=useState(false);
+  const [data,setData]=useState({
+    name:'',room:'',num:'',gpa:'3',grade:'',plan:'',dream:'',
+    subjects:new Set(),subjOther:'',
+    activities:new Set(),actOther:'',
+    riasec:{},
+  });
+  const update=patch=>setData(d=>({...d,...patch}));
+  const toggleSet=(key,v)=>setData(d=>{const s=new Set(d[key]);s.has(v)?s.delete(v):s.add(v);return{...d,[key]:s};});
+
+  const wrap={position:'relative',zIndex:1,maxWidth:660,margin:'0 auto',padding:'20px 20px 80px'};
+  const h2={fontSize:'clamp(20px,4vw,26px)',fontWeight:800,color:'#f1f5f9',lineHeight:1.3,marginBottom:7};
+  const sub={color:'rgba(255,255,255,.4)',fontSize:14,lineHeight:1.6,marginBottom:22};
+  const inp={width:'100%',padding:'11px 14px',background:'rgba(255,255,255,.05)',border:'1.5px solid rgba(212,175,80,.15)',borderRadius:10,color:'#f1f5f9',fontSize:14,fontFamily:'Sarabun,sans-serif',outline:'none',transition:'border-color .2s'};
+  const sel={...inp,background:'rgba(30,27,46,1)'};
+  const ta={...inp,resize:'vertical',minHeight:90,lineHeight:1.6};
+  const btnP={width:'100%',padding:'13px',fontSize:15,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:12,background:`linear-gradient(135deg,${C.purple},${C.mid})`,color:'#fff',cursor:'pointer',transition:'opacity .2s'};
+  const btnS={padding:'11px 20px',fontSize:14,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:`1.5px solid ${C.goldf}.2)`,borderRadius:10,background:'transparent',color:`${C.goldf}.7)`,cursor:'pointer'};
+  const row={display:'flex',gap:10,marginTop:20};
+  const tag={fontSize:11,letterSpacing:3,textTransform:'uppercase',color:C.gold,marginBottom:10};
+  const chips={display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(148px,1fr))',gap:8,marginBottom:18};
+  const field={marginBottom:16};
+  const lbl={display:'block',fontSize:13,fontWeight:600,color:'rgba(255,255,255,.7)',marginBottom:7};
+
+  const submit=async()=>{
+    const subj=[...data.subjects,data.subjOther].filter(Boolean);
+    const act=[...data.activities,data.actOther].filter(Boolean);
+    const gpa=parseFloat(data.gpa).toFixed(2);
+    const riasecCode=computeRiasec(data.riasec);
+    const riasecDesc=riasecCode.split('').map(c=>RIASEC_LABEL[c]).join(', ');
+
+    const prompt=`คุณคือที่ปรึกษาการศึกษาไทยที่ใช้ Holland RIASEC Theory ในการแนะแนว
+ตอบภาษาไทยเท่านั้น ห้ามใช้ตัวอักษรจีนหรือญี่ปุ่น
+
+ข้อมูลนักเรียน:
+- Holland RIASEC Code: ${riasecCode} (${riasecDesc})
+- ชั้นเรียน: ${data.grade} แผน${data.plan} GPA ${gpa}
+- วิชาที่ชอบ: ${subj.join(', ')}
+- กิจกรรม: ${act.join(', ')}
+- ความฝัน: ${data.dream}
+
+อ้างอิง Holland RIASEC Theory ในการวิเคราะห์และแนะนำคณะที่เหมาะสมกับ RIASEC Code ของนักเรียน
+
+ตอบ JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี newline ใน string:
+{"summary":"สรุปบุคลิกภาพตาม Holland RIASEC","riasecCode":"${riasecCode}","riasecDesc":"${riasecDesc}","faculties":[{"rank":1,"name":"คณะวิศวกรรมศาสตร์","match":90,"reason":"เหตุผลที่สอดคล้องกับ RIASEC","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":2,"name":"x","match":80,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":3,"name":"x","match":70,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]}],"roadmap":[{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]}],"tip":"x"}`;
+
+    setLoading(true);
+    try{
+      const call=async(msgs)=>{
+        const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:msgs,max_tokens:2500,temperature:0.3})});
+        const j=await r.json();
+        if(!r.ok)throw new Error(j.error?.message||'Error '+r.status);
+        return j.choices[0].message.content;
+      };
+      let txt=await call([{role:'user',content:prompt}]);
+      const clean=t=>{t=t.replace(/```json/g,'').replace(/```/g,'').trim();const s=t.indexOf('{'),e=t.lastIndexOf('}');if(s>-1&&e>-1)t=t.substring(s,e+1);return t.replace(/[\r\n\t]/g,' ').replace(/[\x00-\x1F\x7F]/g,' ').replace(/,\s*}/g,'}').replace(/,\s*]/g,']');};
+      txt=clean(txt);
+      let result;
+      try{result=JSON.parse(txt);}
+      catch(e1){
+        txt=await call([{role:'user',content:prompt},{role:'assistant',content:txt},{role:'user',content:'JSON มี syntax error กรุณาตอบ JSON ที่ถูกต้องใหม่ ห้ามมี newline ใน string ห้ามมีข้อความนอก JSON'}]);
+        result=JSON.parse(clean(txt));
+      }
+      try{fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:data.name,classroom:data.room,studentNo:data.num,subjects:subj.join(', '),activities:act.join(', '),gpa,grade:data.grade,plan:data.plan,dream:data.dream,riasec:riasecCode,faculty1:result.faculties[0]?.name||'',faculty2:result.faculties[1]?.name||'',faculty3:result.faculties[2]?.name||''})});}catch(e){}
+      onDone(result);
+    }catch(err){alert('เกิดข้อผิดพลาด: '+err.message);}
+    finally{setLoading(false);}
   };
-  return (
-    <div>
-      <p style={S.tag}>ขั้นที่ 1 — วิชาเรียน</p>
-      <h2 style={S.h2}>วิชาอะไรที่ทำให้คุณอยากเข้าห้องเรียน?</h2>
-      <p style={S.sub}>แตะเลือกได้หลายวิชา ยิ่งตรงความจริง ผลยิ่งแม่น</p>
-      <div style={{marginBottom:18}}>
-        <label style={S.label}>วิชาที่ชอบ</label>
-        <div style={S.chips}>
-          {SUBJECTS.map(s => <Chip key={s} label={s} selected={data.subjects.has(s)} onToggle={()=>toggle(s)} />)}
-        </div>
-      </div>
-      <div style={{marginBottom:24}}>
-        <label style={S.label}>วิชาอื่นๆ (ถ้ามี)</label>
-        <input style={S.input} value={data.subjOther} onChange={e=>setData({...data,subjOther:e.target.value})} placeholder="เช่น ดาราศาสตร์..." />
-      </div>
-      <button style={S.btnP} onClick={()=>{
-        if(data.subjects.size===0){alert('กรุณาเลือกวิชาที่ชอบอย่างน้อย 1 วิชา');return;}
-        onNext();
-      }}>ถัดไป →</button>
-    </div>
-  );
-}
 
-/* ── STEP 2 ── */
-function Step2({data, setData, onNext, onBack}) {
-  const toggle = (v) => {
-    const s = new Set(data.activities);
-    s.has(v) ? s.delete(v) : s.add(v);
-    setData({...data, activities: s});
-  };
-  return (
-    <div>
-      <p style={S.tag}>ขั้นที่ 2 — กิจกรรม</p>
-      <h2 style={S.h2}>ชอบทำอะไรในเวลาว่าง?</h2>
-      <p style={S.sub}>เลือกทุกอย่างที่ตรงกับตัวเอง</p>
-      <div style={{marginBottom:18}}>
-        <label style={S.label}>กิจกรรมที่ทำ</label>
-        <div style={S.chips}>
-          {ACTIVITIES.map(a => <Chip key={a} label={a} selected={data.activities.has(a)} onToggle={()=>toggle(a)} />)}
-        </div>
-      </div>
-      <div style={{marginBottom:24}}>
-        <label style={S.label}>กิจกรรมอื่นๆ (ถ้ามี)</label>
-        <input style={S.input} value={data.actOther} onChange={e=>setData({...data,actOther:e.target.value})} placeholder="เช่น ทำหนัง..." />
-      </div>
-      <div style={{display:'flex',gap:10}}>
-        <button style={S.btnS} onClick={onBack}>← กลับ</button>
-        <button style={{...S.btnP,flex:1}} onClick={onNext}>ถัดไป →</button>
-      </div>
-    </div>
-  );
-}
+  return(
+    <div style={{background:C.bg,minHeight:'100vh'}}>
+      {loading&&<Loading/>}
+      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 15% 20%,rgba(76,29,149,.3) 0%,transparent 55%)',pointerEvents:'none'}}/>
+      <nav style={{position:'relative',zIndex:10,display:'flex',alignItems:'center',gap:10,padding:'14px 20px',borderBottom:`1px solid ${C.goldf}.15)`,background:'rgba(15,13,26,.8)'}}>
+        <span style={{fontSize:16,fontWeight:800,color:C.gold,cursor:'pointer'}} onClick={onHome}>KUS Compass</span>
+        <span style={{color:`${C.goldf}.3)`}}>/</span>
+        <span style={{color:`${C.goldf}.5)`,fontSize:13}}>กรอกข้อมูล</span>
+      </nav>
+      <Progress step={step} total={5}/>
+      <div style={wrap}>
+        <div style={{paddingTop:20,animation:'fadeUp .35s ease'}}>
 
-/* ── STEP 3 ── */
-function Step3({data, setData, onNext, onBack}) {
-  return (
-    <div>
-      <p style={S.tag}>ขั้นที่ 3 — ข้อมูลส่วนตัว</p>
-      <h2 style={S.h2}>บอกเพิ่มเติมเกี่ยวกับตัวเอง</h2>
-      <p style={S.sub}>ช่วยให้ AI วิเคราะห์แม่นยำขึ้น</p>
-      <div style={{marginBottom:16}}>
-        <label style={S.label}>ชื่อ-นามสกุล</label>
-        <input style={S.input} value={data.name} onChange={e=>setData({...data,name:e.target.value})} placeholder="เช่น นายสมชาย ใจดี" />
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
-        <div>
-          <label style={S.label}>ห้องเรียน</label>
-          <input style={S.input} value={data.room} onChange={e=>setData({...data,room:e.target.value})} placeholder="เช่น ม.6/2" />
-        </div>
-        <div>
-          <label style={S.label}>เลขที่</label>
-          <input style={S.input} value={data.num} onChange={e=>setData({...data,num:e.target.value})} placeholder="เช่น 15" />
-        </div>
-      </div>
-      <div style={{marginBottom:16}}>
-        <label style={S.label}>เกรดเฉลี่ย (GPA)</label>
-        <div style={{textAlign:'center',fontSize:52,fontWeight:800,color:'#d4af50',marginBottom:8}}>{parseFloat(data.gpa).toFixed(2)}</div>
-        <input type="range" min="1" max="4" step="0.05" value={data.gpa}
-          onChange={e=>setData({...data,gpa:e.target.value})}
-          style={{width:'100%',accentColor:'#d4af50',cursor:'pointer'}} />
-        <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'rgba(255,255,255,.3)',marginTop:4}}>
-          <span>1.00</span><span>2.00</span><span>3.00</span><span>4.00</span>
-        </div>
-      </div>
-      <div style={{marginBottom:16}}>
-        <label style={S.label}>ชั้นเรียน</label>
-        <select style={S.sel} value={data.grade} onChange={e=>setData({...data,grade:e.target.value})}>
-          <option value="">— เลือก —</option>
-          {['ม.4','ม.5','ม.6','จบ ม.6 แล้ว'].map(g=><option key={g}>{g}</option>)}
-        </select>
-      </div>
-      <div style={{marginBottom:16}}>
-        <label style={S.label}>แผนการเรียน</label>
-        <select style={S.sel} value={data.plan} onChange={e=>setData({...data,plan:e.target.value})}>
-          <option value="">— เลือก —</option>
-          {['วิทย์-คณิต','ศิลป์-คำนวณ','ศิลป์-ภาษา','ศิลป์-สังคม','อื่นๆ'].map(p=><option key={p}>{p}</option>)}
-        </select>
-      </div>
-      <div style={{marginBottom:24}}>
-        <label style={S.label}>ความฝัน / อยากทำอะไรในอนาคต</label>
-        <textarea style={S.ta} value={data.dream} onChange={e=>setData({...data,dream:e.target.value})} placeholder="เช่น อยากสร้างแอปของตัวเอง..." />
-      </div>
-      <div style={{display:'flex',gap:10}}>
-        <button style={S.btnS} onClick={onBack}>← กลับ</button>
-        <button style={{...S.btnP,flex:1}} onClick={()=>{
-          if(!data.grade){alert('กรุณาเลือกชั้นเรียน');return;}
-          onNext();
-        }}>ถัดไป →</button>
-      </div>
-    </div>
-  );
-}
-
-/* ── STEP 4 ── */
-function Step4({data, onBack, onSubmit, loading}) {
-  const subj = [...data.subjects, data.subjOther].filter(Boolean);
-  const act  = [...data.activities, data.actOther].filter(Boolean);
-  const rows = [
-    ['ชื่อ', data.name||'-'],
-    ['ห้อง / เลขที่', `${data.room||'-'} เลขที่ ${data.num||'-'}`],
-    ['วิชาที่ชอบ', subj.join(', ')||'-'],
-    ['กิจกรรม', act.join(', ')||'-'],
-    ['GPA', parseFloat(data.gpa).toFixed(2)],
-    ['ชั้นเรียน', `${data.grade} (${data.plan})`],
-    ['ความฝัน', data.dream||'-'],
-  ];
-  return (
-    <div>
-      <p style={S.tag}>ขั้นที่ 4 — ยืนยันข้อมูล</p>
-      <h2 style={S.h2}>ตรวจสอบแล้ววิเคราะห์ได้เลย!</h2>
-      <p style={S.sub}>ตรวจสอบข้อมูลด้านล่างก่อนส่ง</p>
-      <div style={S.card}>
-        {rows.map(([k,v])=>(
-          <div key={k} style={{display:'flex',gap:10,marginBottom:8,alignItems:'flex-start'}}>
-            <span style={{fontSize:11,color:'rgba(212,175,80,.5)',letterSpacing:1,textTransform:'uppercase',minWidth:80,paddingTop:2}}>{k}</span>
-            <span style={{fontSize:13,color:'#e2e8f0',lineHeight:1.55,flex:1}}>{v}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{display:'flex',gap:10,marginTop:16}}>
-        <button style={S.btnS} onClick={onBack}>← กลับ</button>
-        <button style={{...S.btnP,flex:1}} onClick={onSubmit} disabled={loading}>
-          {loading ? 'กำลังวิเคราะห์...' : '🚀 วิเคราะห์เลย!'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ── RESULT ── */
-function Result({result, onRedo}) {
-  const [open, setOpen] = useState(0);
-  const facs = result.faculties || [];
-  const road = result.roadmap   || [];
-  const rankColor = ['#d97706','#6b7280','#92400e'];
-  const rankBg    = ['linear-gradient(135deg,#d97706,#f59e0b)','linear-gradient(135deg,#6b7280,#9ca3af)','linear-gradient(135deg,#92400e,#b45309)'];
-  return (
-    <div>
-      <div style={{textAlign:'center',paddingBottom:48}}>
-        <p style={{...S.tag,textAlign:'center'}}>ผลการวิเคราะห์ AI</p>
-        <h1 style={{fontSize:'clamp(22px,5vw,38px)',fontWeight:900,color:'#f1f5f9',lineHeight:1.2,marginBottom:18}}>
-          คณะที่ใช่ของคุณคือ<br/>
-          <span style={{background:'linear-gradient(135deg,#d4af50,#f0d060)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
-            {facs[0]?.name || 'คณะที่เหมาะกับคุณ'}
-          </span>
-        </h1>
-        <div style={{...S.card,textAlign:'left',maxWidth:600,margin:'0 auto',fontSize:15,color:'rgba(255,255,255,.65)',lineHeight:1.8}}>
-          {result.summary}
-        </div>
-      </div>
-
-      <div style={{marginBottom:48}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,paddingBottom:14,borderBottom:'1px solid rgba(212,175,80,.1)'}}>
-          <div style={{width:36,height:36,borderRadius:10,background:'rgba(76,29,149,.5)',border:'1px solid rgba(212,175,80,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🎓</div>
-          <h2 style={{fontSize:20,fontWeight:800,color:'#f1f5f9',margin:0}}>คณะที่แนะนำ</h2>
-        </div>
-        {facs.map((f,i)=>(
-          <div key={i} style={{...S.card,marginBottom:14,borderColor: i===0 ? 'rgba(212,175,80,.3)' : 'rgba(212,175,80,.12)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:14,cursor:'pointer'}} onClick={()=>setOpen(open===i?-1:i)}>
-              <div style={{width:38,height:38,borderRadius:10,background:rankBg[i]||'rgba(76,29,149,.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900,color: i<2?'#1c1917':'#fff',flexShrink:0}}>{f.rank||i+1}</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:16,fontWeight:800,color:'#f1f5f9',marginBottom:3}}>{f.name}</div>
-                <div style={{fontSize:12,color:'rgba(212,175,80,.5)'}}>{(f.careers||[]).join(' · ')}</div>
+          {step===1&&(
+            <div>
+              <p style={tag}>ขั้นที่ 1 — ข้อมูลส่วนตัว</p>
+              <h2 style={h2}>เริ่มต้นด้วยการรู้จักคุณ</h2>
+              <p style={sub}>กรอกข้อมูลพื้นฐานเพื่อปรับผลลัพธ์ให้เหมาะกับคุณ</p>
+              <div style={field}><label style={lbl}>ชื่อ-นามสกุล</label><input style={inp} value={data.name} onChange={e=>update({name:e.target.value})} placeholder="เช่น นายสมชาย ใจดี"/></div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+                <div><label style={lbl}>ห้องเรียน</label><input style={inp} value={data.room} onChange={e=>update({room:e.target.value})} placeholder="เช่น ม.6/2"/></div>
+                <div><label style={lbl}>เลขที่</label><input style={inp} value={data.num} onChange={e=>update({num:e.target.value})} placeholder="เช่น 15"/></div>
               </div>
-              <div style={{textAlign:'right',flexShrink:0}}>
-                <div style={{fontSize:24,fontWeight:900,background:'linear-gradient(135deg,#d4af50,#f0d060)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{f.match}%</div>
-                <div style={{fontSize:11,color:'rgba(212,175,80,.4)',letterSpacing:1}}>MATCH</div>
+              <div style={field}><label style={lbl}>ชั้นเรียน</label>
+                <select style={sel} value={data.grade} onChange={e=>update({grade:e.target.value})}>
+                  <option value="">— เลือก —</option>
+                  {['ม.4','ม.5','ม.6','จบ ม.6 แล้ว'].map(g=><option key={g}>{g}</option>)}
+                </select>
+              </div>
+              <div style={field}><label style={lbl}>แผนการเรียน</label>
+                <select style={sel} value={data.plan} onChange={e=>update({plan:e.target.value})}>
+                  <option value="">— เลือก —</option>
+                  {['วิทย์-คณิต','ศิลป์-คำนวณ','ศิลป์-ภาษา','ศิลป์-สังคม','อื่นๆ'].map(p=><option key={p}>{p}</option>)}
+                </select>
+              </div>
+              <div style={field}><label style={lbl}>เกรดเฉลี่ย (GPA)</label>
+                <div style={{textAlign:'center',fontSize:48,fontWeight:800,color:C.gold,marginBottom:8}}>{parseFloat(data.gpa).toFixed(2)}</div>
+                <input type="range" min={1} max={4} step={0.05} value={data.gpa} onChange={e=>update({gpa:e.target.value})} style={{width:'100%',accentColor:C.gold,cursor:'pointer'}}/>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'rgba(255,255,255,.3)',marginTop:4}}><span>1.00</span><span>2.00</span><span>3.00</span><span>4.00</span></div>
+              </div>
+              <button style={btnP} onClick={()=>{if(!data.grade){alert('กรุณาเลือกชั้นเรียน');return;}setStep(2);}}>ถัดไป →</button>
+            </div>
+          )}
+
+          {step===2&&(
+            <div>
+              <p style={tag}>ขั้นที่ 2 — วิชาและกิจกรรม</p>
+              <h2 style={h2}>คุณชอบอะไร?</h2>
+              <p style={sub}>แตะเลือกวิชาและกิจกรรมที่ตรงกับตัวเอง</p>
+              <div style={field}><label style={lbl}>วิชาที่ชอบ</label>
+                <div style={chips}>{SUBJECTS.map(s=><Chip key={s} label={s} selected={data.subjects.has(s)} onToggle={()=>toggleSet('subjects',s)}/>)}</div>
+                <input style={inp} value={data.subjOther} onChange={e=>update({subjOther:e.target.value})} placeholder="วิชาอื่นๆ (ถ้ามี)..."/>
+              </div>
+              <div style={field}><label style={lbl}>กิจกรรมที่ชอบ</label>
+                <div style={chips}>{ACTIVITIES.map(a=><Chip key={a} label={a} selected={data.activities.has(a)} onToggle={()=>toggleSet('activities',a)}/>)}</div>
+                <input style={{...inp,marginTop:8}} value={data.actOther} onChange={e=>update({actOther:e.target.value})} placeholder="กิจกรรมอื่นๆ (ถ้ามี)..."/>
+              </div>
+              <div style={row}><button style={btnS} onClick={()=>setStep(1)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={()=>{if(data.subjects.size===0){alert('กรุณาเลือกวิชาที่ชอบอย่างน้อย 1 วิชา');return;}setStep(3);}}>ถัดไป →</button></div>
+            </div>
+          )}
+
+          {step===3&&(
+            <div>
+              <p style={tag}>ขั้นที่ 3 — Holland RIASEC (ชุดที่ 1)</p>
+              <h2 style={h2}>คุณเป็นคนแบบไหน?</h2>
+              <p style={sub}>ทฤษฎี Holland แบ่งบุคลิกภาพ 6 ด้าน ซึ่งสัมพันธ์กับอาชีพและคณะที่เหมาะสม ตอบตามความจริงของตัวเอง</p>
+              <div style={{padding:'12px 16px',borderRadius:10,background:'rgba(212,175,80,.08)',border:`1px solid ${C.goldf}.2)`,marginBottom:20}}>
+                <p style={{fontSize:12,color:C.gold,fontWeight:600,marginBottom:4}}>🎯 Holland RIASEC Theory</p>
+                <p style={{fontSize:12,color:'rgba(255,255,255,.5)',lineHeight:1.6}}>John Holland (1959) พบว่าบุคลิกภาพ 6 ประเภท ได้แก่ R-I-A-S-E-C สัมพันธ์กับสภาพแวดล้อมการทำงานและอาชีพ ใช้เป็นมาตรฐานในการแนะแนวอาชีพทั่วโลก</p>
+              </div>
+              {RIASEC_Q.slice(0,6).map(q=><RiasecSlider key={q.id} q={q} value={data.riasec[q.id]||0} onChange={(id,v)=>update({riasec:{...data.riasec,[id]:v}})}/>)}
+              <div style={row}><button style={btnS} onClick={()=>setStep(2)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={()=>setStep(4)}>ถัดไป →</button></div>
+            </div>
+          )}
+
+          {step===4&&(
+            <div>
+              <p style={tag}>ขั้นที่ 4 — Holland RIASEC (ชุดที่ 2)</p>
+              <h2 style={h2}>ต่ออีกนิดนะ!</h2>
+              <p style={sub}>คำถามชุดสุดท้ายเพื่อให้ผลลัพธ์แม่นยำที่สุด</p>
+              {RIASEC_Q.slice(6).map(q=><RiasecSlider key={q.id} q={q} value={data.riasec[q.id]||0} onChange={(id,v)=>update({riasec:{...data.riasec,[id]:v}})}/>)}
+              <div style={field}><label style={lbl}>ความฝัน / อยากทำอะไรในอนาคต</label>
+                <textarea style={ta} value={data.dream} onChange={e=>update({dream:e.target.value})} placeholder="เช่น อยากสร้างแอป อยากเป็นหมอ อยากออกแบบ..."/>
+              </div>
+              <div style={row}><button style={btnS} onClick={()=>setStep(3)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={()=>setStep(5)}>ถัดไป →</button></div>
+            </div>
+          )}
+
+          {step===5&&(
+            <div>
+              <p style={tag}>ขั้นที่ 5 — ยืนยันข้อมูล</p>
+              <h2 style={h2}>พร้อมวิเคราะห์แล้ว!</h2>
+              <p style={sub}>ตรวจสอบข้อมูลก่อนส่งให้ AI วิเคราะห์</p>
+              {(()=>{
+                const subj=[...data.subjects,data.subjOther].filter(Boolean);
+                const act=[...data.activities,data.actOther].filter(Boolean);
+                const rc=computeRiasec(data.riasec);
+                const rows=[['ชื่อ',data.name||'-'],['ห้อง/เลขที่',`${data.room||'-'} เลขที่ ${data.num||'-'}`],['GPA',parseFloat(data.gpa).toFixed(2)],['ชั้นเรียน',`${data.grade} (${data.plan})`],['วิชาที่ชอบ',subj.join(', ')||'-'],['กิจกรรม',act.join(', ')||'-'],['Holland Code',rc||'-'],['ความฝัน',data.dream||'-']];
+                return(
+                  <div>
+                    <div style={{background:'rgba(76,29,149,.12)',border:`1px solid ${C.goldf}.15)`,borderRadius:14,padding:'18px 20px',marginBottom:16}}>
+                      {rows.map(([k,v])=>(
+                        <div key={k} style={{display:'flex',gap:10,marginBottom:8,alignItems:'flex-start'}}>
+                          <span style={{fontSize:11,color:`${C.goldf}.5)`,letterSpacing:1,textTransform:'uppercase',minWidth:90,paddingTop:2}}>{k}</span>
+                          <span style={{fontSize:13,color:'#e2e8f0',lineHeight:1.55,flex:1}}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{padding:'14px 16px',borderRadius:10,background:'rgba(212,175,80,.06)',border:`1px solid ${C.goldf}.15)`,marginBottom:20}}>
+                      <p style={{fontSize:12,color:C.gold,margin:0}}>🧠 AI จะวิเคราะห์โดยอ้างอิง <strong>Holland RIASEC Theory</strong> และแนะนำคณะที่เหมาะสมกับบุคลิกภาพของคุณ</p>
+                    </div>
+                  </div>
+                );
+              })()}
+              <div style={row}><button style={btnS} onClick={()=>setStep(4)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={submit}>🚀 วิเคราะห์เลย!</button></div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── RESULT ─── */
+function ResultPage({result,onRedo,onHome}){
+  const [open,setOpen]=useState(0);
+  const facs=result.faculties||[];
+  const road=result.roadmap||[];
+  const rankBg=['linear-gradient(135deg,#d97706,#f59e0b)','linear-gradient(135deg,#6b7280,#9ca3af)','linear-gradient(135deg,#92400e,#b45309)'];
+  const rankTxt=['#1c1917','#fff','#fff'];
+  const wrap={position:'relative',zIndex:1,maxWidth:820,margin:'0 auto',padding:'28px 20px 80px'};
+
+  return(
+    <div style={{background:C.bg,minHeight:'100vh'}}>
+      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 10% 20%,rgba(76,29,149,.35) 0%,transparent 55%),radial-gradient(ellipse at 90% 80%,rgba(109,40,217,.15) 0%,transparent 55%)',pointerEvents:'none'}}/>
+      <nav style={{position:'relative',zIndex:10,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:`1px solid ${C.goldf}.15)`,background:'rgba(15,13,26,.8)'}}>
+        <span style={{fontSize:16,fontWeight:800,color:C.gold,cursor:'pointer'}} onClick={onHome}>KUS Compass</span>
+        <button onClick={onRedo} style={{padding:'8px 16px',fontSize:13,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:`1.5px solid ${C.goldf}.2)`,borderRadius:8,background:'transparent',color:`${C.goldf}.7)`,cursor:'pointer'}}>ทำแบบประเมินใหม่</button>
+      </nav>
+
+      <div style={wrap}>
+        {/* HERO */}
+        <div style={{textAlign:'center',paddingBottom:48,animation:'fadeUp .5s ease'}}>
+          <p style={{fontSize:11,letterSpacing:3,textTransform:'uppercase',color:C.gold,marginBottom:14}}>ผลการวิเคราะห์ Holland RIASEC + AI</p>
+          {result.riasecCode&&(
+            <div style={{display:'inline-flex',alignItems:'center',gap:10,padding:'10px 20px',borderRadius:12,background:'rgba(76,29,149,.2)',border:`1px solid ${C.goldf}.25)`,marginBottom:20}}>
+              <span style={{fontSize:22,fontWeight:900,color:C.gold,letterSpacing:4}}>{result.riasecCode}</span>
+              <div style={{textAlign:'left'}}>
+                <div style={{fontSize:11,color:`${C.goldf}.5)`,letterSpacing:1,textTransform:'uppercase'}}>Holland Code</div>
+                <div style={{fontSize:12,color:'rgba(255,255,255,.6)'}}>{result.riasecDesc}</div>
               </div>
             </div>
-            {open===i && (
-              <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid rgba(212,175,80,.1)'}}>
-                <p style={{color:'rgba(255,255,255,.55)',fontSize:14,lineHeight:1.75,marginBottom:16}}>{f.reason}</p>
-                <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:18}}>
-                  {(f.careers||[]).map(c=>(
-                    <span key={c} style={{padding:'4px 13px',fontSize:12,background:'rgba(76,29,149,.25)',border:'1px solid rgba(212,175,80,.2)',borderRadius:999,color:'#d4af50'}}>{c}</span>
+          )}
+          <h1 style={{fontSize:'clamp(22px,5vw,40px)',fontWeight:900,color:'#f1f5f9',lineHeight:1.2,marginBottom:18}}>
+            คณะที่ใช่ของคุณคือ<br/>
+            <span style={{background:`linear-gradient(135deg,${C.gold},#f0d060)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
+              {facs[0]?.name||'คณะที่เหมาะกับคุณ'}
+            </span>
+          </h1>
+          <div style={{maxWidth:640,margin:'0 auto',padding:'18px 22px',background:'rgba(76,29,149,.12)',border:`1px solid ${C.goldf}.2)`,borderRadius:14,fontSize:15,color:'rgba(255,255,255,.65)',lineHeight:1.8,textAlign:'left'}}>
+            {result.summary}
+          </div>
+        </div>
+
+        {/* FACULTIES */}
+        <div style={{marginBottom:48}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.goldf}.1)`}}>
+            <div style={{width:36,height:36,borderRadius:10,background:'rgba(76,29,149,.5)',border:`1px solid ${C.goldf}.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🎓</div>
+            <h2 style={{fontSize:20,fontWeight:800,color:'#f1f5f9',margin:0}}>คณะที่แนะนำตาม Holland Code</h2>
+          </div>
+          {facs.map((f,i)=>(
+            <div key={i} style={{background:'rgba(76,29,149,.1)',border:`1.5px solid ${i===0?C.goldf+',.35)':'rgba(212,175,80,.12)'}`,borderRadius:16,overflow:'hidden',marginBottom:14,transition:'border-color .2s'}}>
+              <div style={{display:'flex',alignItems:'center',gap:14,padding:'18px 20px',cursor:'pointer'}} onClick={()=>setOpen(open===i?-1:i)}>
+                <div style={{width:38,height:38,borderRadius:10,background:rankBg[i]||'rgba(76,29,149,.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900,color:rankTxt[i]||'#fff',flexShrink:0}}>{i+1}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:16,fontWeight:800,color:'#f1f5f9',marginBottom:3}}>{f.name}</div>
+                  <div style={{fontSize:12,color:`${C.goldf}.5)`}}>{(f.careers||[]).join(' · ')}</div>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontSize:24,fontWeight:900,background:`linear-gradient(135deg,${C.gold},#f0d060)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{f.match}%</div>
+                    <div style={{fontSize:10,color:`${C.goldf}.4)`,letterSpacing:1}}>MATCH</div>
+                  </div>
+                  <span style={{fontSize:18,color:`${C.goldf}.4)`,transform:open===i?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}>▾</span>
+                </div>
+              </div>
+              {open===i&&(
+                <div style={{padding:'0 20px 20px',borderTop:`1px solid ${C.goldf}.08)`}}>
+                  <p style={{color:'rgba(255,255,255,.55)',fontSize:14,lineHeight:1.75,padding:'14px 0 16px'}}>{f.reason}</p>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:18}}>
+                    {(f.careers||[]).map(c=><span key={c} style={{padding:'4px 13px',fontSize:12,background:'rgba(76,29,149,.25)',border:`1px solid ${C.goldf}.2)`,borderRadius:999,color:C.gold}}>{c}</span>)}
+                  </div>
+                  <p style={{fontSize:11,letterSpacing:2,textTransform:'uppercase',color:`${C.goldf}.45)`,marginBottom:12}}>มหาวิทยาลัยที่เปิดสอน</p>
+                  {(f.universities||[]).map((u,j)=>(
+                    <div key={j} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'11px 13px',background:'rgba(76,29,149,.08)',border:`1px solid ${C.goldf}.08)`,borderRadius:10,marginBottom:8}}>
+                      <div style={{width:7,height:7,borderRadius:'50%',background:`linear-gradient(135deg,${C.purple},${C.gold})`,flexShrink:0,marginTop:5}}/>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:'#e2e8f0'}}>{u.name}</div>
+                        <div style={{fontSize:12,color:'rgba(255,255,255,.4)',marginTop:2}}>{u.program}</div>
+                        {u.note&&<div style={{fontSize:11,color:`${C.goldf}.4)`,marginTop:2}}>{u.note}</div>}
+                      </div>
+                    </div>
                   ))}
                 </div>
-                <p style={{fontSize:11,letterSpacing:2,textTransform:'uppercase',color:'rgba(212,175,80,.45)',marginBottom:10}}>มหาวิทยาลัยที่เปิดสอน</p>
-                {(f.universities||[]).map((u,j)=>(
-                  <div key={j} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'11px 13px',background:'rgba(76,29,149,.08)',border:'1px solid rgba(212,175,80,.08)',borderRadius:10,marginBottom:8}}>
-                    <div style={{width:7,height:7,borderRadius:'50%',background:'linear-gradient(135deg,#4c1d95,#d4af50)',flexShrink:0,marginTop:5}} />
-                    <div>
-                      <div style={{fontSize:13,fontWeight:700,color:'#e2e8f0'}}>{u.name}</div>
-                      <div style={{fontSize:12,color:'rgba(255,255,255,.4)',marginTop:2}}>{u.program}</div>
-                      {u.note && <div style={{fontSize:11,color:'rgba(212,175,80,.4)',marginTop:2}}>{u.note}</div>}
-                    </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* ROADMAP */}
+        <div style={{marginBottom:48}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.goldf}.1)`}}>
+            <div style={{width:36,height:36,borderRadius:10,background:'rgba(76,29,149,.5)',border:`1px solid ${C.goldf}.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🗺️</div>
+            <h2 style={{fontSize:20,fontWeight:800,color:'#f1f5f9',margin:0}}>Roadmap การเตรียมตัว</h2>
+          </div>
+          {road.map((p,i)=>(
+            <div key={i} style={{display:'flex',gap:18,paddingBottom:i<road.length-1?22:0,borderBottom:i<road.length-1?`1px solid ${C.goldf}.08)`:'none',marginBottom:i<road.length-1?22:0}}>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0,width:18}}>
+                <div style={{width:18,height:18,borderRadius:'50%',background:`linear-gradient(135deg,${C.purple},${C.gold})`}}/>
+                {i<road.length-1&&<div style={{flex:1,width:2,background:`${C.goldf}.1)`,marginTop:6}}/>}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,letterSpacing:2,textTransform:'uppercase',color:C.gold,marginBottom:4}}>{p.phase}</div>
+                <div style={{fontSize:16,fontWeight:700,color:'#f1f5f9',marginBottom:10}}>{p.title}</div>
+                {(p.items||[]).map((it,j)=>(
+                  <div key={j} style={{display:'flex',gap:8,fontSize:13,color:'rgba(255,255,255,.5)',lineHeight:1.5,marginBottom:5}}>
+                    <span style={{color:`${C.goldf}.4)`,flexShrink:0}}>·</span>{it}
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div style={{marginBottom:48}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,paddingBottom:14,borderBottom:'1px solid rgba(212,175,80,.1)'}}>
-          <div style={{width:36,height:36,borderRadius:10,background:'rgba(76,29,149,.5)',border:'1px solid rgba(212,175,80,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🗺️</div>
-          <h2 style={{fontSize:20,fontWeight:800,color:'#f1f5f9',margin:0}}>Roadmap การเตรียมตัว</h2>
-        </div>
-        {road.map((p,i)=>(
-          <div key={i} style={{display:'flex',gap:18,paddingBottom:20,borderBottom: i<road.length-1?'1px solid rgba(212,175,80,.08)':'none',marginBottom: i<road.length-1?20:0}}>
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0,width:18}}>
-              <div style={{width:18,height:18,borderRadius:'50%',background:'linear-gradient(135deg,#4c1d95,#d4af50)'}} />
-              {i<road.length-1 && <div style={{flex:1,width:2,background:'rgba(212,175,80,.1)',marginTop:6}} />}
             </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:11,letterSpacing:2,textTransform:'uppercase',color:'#d4af50',marginBottom:4}}>{p.phase}</div>
-              <div style={{fontSize:16,fontWeight:700,color:'#f1f5f9',marginBottom:10}}>{p.title}</div>
-              {(p.items||[]).map((it,j)=>(
-                <div key={j} style={{display:'flex',gap:8,fontSize:13,color:'rgba(255,255,255,.5)',lineHeight:1.5,marginBottom:5}}>
-                  <span style={{color:'rgba(212,175,80,.4)',flexShrink:0}}>·</span>{it}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {result.tip && (
-        <div style={{...S.card,display:'flex',gap:14,marginBottom:48,borderColor:'rgba(212,175,80,.2)',background:'linear-gradient(135deg,rgba(76,29,149,.15),rgba(212,175,80,.06))'}}>
-          <span style={{fontSize:26,flexShrink:0}}>🌟</span>
-          <p style={{fontSize:14,color:'#d4af50',lineHeight:1.8,margin:0}}>{result.tip}</p>
+          ))}
         </div>
-      )}
 
-      <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-        <button style={{...S.btnP,width:'auto',padding:'14px 32px'}} onClick={()=>window.print()}>🖨️ พิมพ์ผลลัพธ์</button>
-        <button style={{...S.btnS,padding:'14px 24px'}} onClick={onRedo}>ทำแบบประเมินใหม่</button>
-      </div>
-    </div>
-  );
-}
+        {result.tip&&(
+          <div style={{display:'flex',gap:14,padding:'20px 22px',background:'rgba(76,29,149,.12)',border:`1px solid ${C.goldf}.2)`,borderRadius:14,marginBottom:48}}>
+            <span style={{fontSize:24,flexShrink:0}}>🌟</span>
+            <p style={{fontSize:14,color:C.gold,lineHeight:1.8,margin:0}}>{result.tip}</p>
+          </div>
+        )}
 
-/* ── MAIN APP ── */
-function App() {
-  const [screen, setScreen] = useState('home'); // home | form | result
-  const [step,   setStep]   = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult]  = useState(null);
-  const [data, setData] = useState({
-    subjects: new Set(), subjOther:'',
-    activities: new Set(), actOther:'',
-    name:'', room:'', num:'', gpa:'3',
-    grade:'', plan:'', dream:'',
-  });
-
-  const resetData = () => {
-    setData({subjects:new Set(),subjOther:'',activities:new Set(),actOther:'',name:'',room:'',num:'',gpa:'3',grade:'',plan:'',dream:''});
-    setStep(1);
-  };
-
-  const submitForm = async () => {
-    const subj = [...data.subjects, data.subjOther].filter(Boolean);
-    const act  = [...data.activities, data.actOther].filter(Boolean);
-    const gpa  = parseFloat(data.gpa).toFixed(2);
-    const prompt = `ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น ห้ามใช้ภาษาจีนญี่ปุ่น ห้าม newline ใน string value ทุกค่าต้องอยู่ในบรรทัดเดียว
-นักเรียน: ชั้น ${data.grade} แผน${data.plan} GPA ${gpa} วิชา ${subj.join(',')} กิจกรรม ${act.join(',')} ความฝัน ${data.dream}
-โครงสร้าง JSON (ห้ามเปลี่ยน key ห้ามเพิ่ม field):
-{"summary":"x","faculties":[{"rank":1,"name":"คณะวิศวกรรมศาสตร์","match":90,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":2,"name":"x","match":80,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":3,"name":"x","match":70,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]}],"roadmap":[{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]}],"tip":"x"}
-แทน x ด้วยข้อมูลจริง ชื่อคณะต้องเป็นชื่อจริงเช่น คณะแพทยศาสตร์ คณะวิศวกรรมศาสตร์ คณะวิทยาการคอมพิวเตอร์`;
-
-    setLoading(true);
-    try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
-        body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:2000,temperature:0.4})
-      });
-      const json = await res.json();
-      if(!res.ok) throw new Error(json.error?.message||'Error '+res.status);
-      let txt = json.choices[0].message.content;
-      // clean JSON
-      txt = txt.replace(/```json/g,'').replace(/```/g,'').trim();
-      const s=txt.indexOf('{'), e=txt.lastIndexOf('}');
-      if(s>-1&&e>-1) txt=txt.substring(s,e+1);
-      // remove all control chars and fix common issues
-      txt = txt
-        .replace(/\r\n/g,' ').replace(/\r/g,' ').replace(/\n/g,' ').replace(/\t/g,' ')
-        .replace(/[\x00-\x1F\x7F]/g,' ')
-        .replace(/,\s*}/g,'}').replace(/,\s*]/g,']')
-        .replace(/([{,]\s*"[^"]*"\s*:\s*")([^"]*?)("\s*[,}])/g, (m,a,b,c)=>a+b.replace(/"/g,"'")+c);
-      let r;
-      try { r = JSON.parse(txt); }
-      catch(e1) {
-        // retry with stricter prompt
-        const res2 = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
-          body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[
-            {role:'user',content:prompt},
-            {role:'assistant',content:txt},
-            {role:'user',content:'JSON ที่ตอบมามี syntax error กรุณาตอบ JSON ที่ถูกต้องใหม่อีกครั้ง ห้ามมี newline ใน string values'}
-          ],max_tokens:2000,temperature:0.2})
-        });
-        const json2 = await res2.json();
-        let txt2 = json2.choices[0].message.content;
-        txt2 = txt2.replace(/```json/g,'').replace(/```/g,'').trim();
-        const s2=txt2.indexOf('{'),e2=txt2.lastIndexOf('}');
-        if(s2>-1&&e2>-1) txt2=txt2.substring(s2,e2+1);
-        txt2 = txt2.replace(/[\r\n\t]/g,' ').replace(/[\x00-\x1F\x7F]/g,' ')
-          .replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
-        r = JSON.parse(txt2);
-      }
-      // save to sheets
-      try {
-        fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({name:data.name,classroom:data.room,studentNo:data.num,subjects:subj.join(', '),activities:act.join(', '),gpa,grade:data.grade,plan:data.plan,dream:data.dream,faculty1:r.faculties[0]?.name||'',faculty2:r.faculties[1]?.name||'',faculty3:r.faculties[2]?.name||''})
-        });
-      } catch(e){}
-      setResult(r);
-      setScreen('result');
-    } catch(err) {
-      alert('เกิดข้อผิดพลาด: '+err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if(screen==='home') return <Home onStart={()=>setScreen('form')} />;
-
-  if(screen==='result') return (
-    <div style={S.page}>
-      <div style={S.grad} />
-      <nav style={S.nav}>
-        <span style={S.logo} onClick={()=>{setScreen('home');resetData();}}>KUS Compass</span>
-        <button style={S.btnS} onClick={()=>{setScreen('form');setStep(1);}}>ทำแบบประเมินใหม่</button>
-      </nav>
-      <div style={S.wrap}><Result result={result} onRedo={()=>{setScreen('form');resetData();}} /></div>
-    </div>
-  );
-
-  return (
-    <div style={S.page}>
-      {loading && <Loading />}
-      <div style={S.grad} />
-      <nav style={S.nav}>
-        <span style={S.logo} onClick={()=>setScreen('home')}>KUS Compass</span>
-        <span style={{fontSize:14,color:'rgba(212,175,80,.5)'}}>กรอกข้อมูล</span>
-      </nav>
-      <Progress step={step} />
-      <div style={S.wrap}>
-        <div style={{paddingTop:24}}>
-          {step===1 && <Step1 data={data} setData={setData} onNext={()=>setStep(2)} />}
-          {step===2 && <Step2 data={data} setData={setData} onNext={()=>setStep(3)} onBack={()=>setStep(1)} />}
-          {step===3 && <Step3 data={data} setData={setData} onNext={()=>setStep(4)} onBack={()=>setStep(2)} />}
-          {step===4 && <Step4 data={data} onBack={()=>setStep(3)} onSubmit={submitForm} loading={loading} />}
+        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+          <button style={{padding:'13px 32px',fontSize:15,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:12,background:`linear-gradient(135deg,${C.purple},${C.mid})`,color:'#fff',cursor:'pointer'}} onClick={()=>window.print()}>🖨️ พิมพ์ผลลัพธ์</button>
+          <button style={{padding:'13px 24px',fontSize:15,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:`1.5px solid ${C.goldf}.2)`,borderRadius:12,background:'transparent',color:`${C.goldf}.7)`,cursor:'pointer'}} onClick={onRedo}>ทำแบบประเมินใหม่</button>
         </div>
       </div>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+/* ─── APP ─── */
+function App(){
+  const [screen,setScreen]=useState('home');
+  const [result,setResult]=useState(null);
+  return(
+    <>
+      {screen==='home'&&<Home onStart={()=>setScreen('form')}/>}
+      {screen==='form'&&<FormPage onDone={r=>{setResult(r);setScreen('result');}} onHome={()=>setScreen('home')}/>}
+      {screen==='result'&&<ResultPage result={result} onRedo={()=>setScreen('form')} onHome={()=>setScreen('home')}/>}
+    </>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
