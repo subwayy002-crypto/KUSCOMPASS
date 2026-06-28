@@ -19,7 +19,7 @@
 <script type="text/babel">
 const { useState, useEffect } = React;
 
-const GROQ_KEY = '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';
+const GROQ_KEY = 'YOUR_GROQ_KEY_HERE';
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyBVdS7D6qMUKCacdljclXIksFgVHYKGkVRRG9xY8Te6yGA0bpAyIFJ8jZhFZTFaoD5/exec';
 
 const SUBJECTS = ['คณิตศาสตร์','ฟิสิกส์','เคมี','ชีววิทยา','คอมพิวเตอร์','ภาษาอังกฤษ','ภาษาไทย','สังคมศึกษา','ประวัติศาสตร์','ศิลปะ','ดนตรี','พลศึกษา','เศรษฐศาสตร์','จิตวิทยา'];
@@ -419,11 +419,11 @@ function App() {
     const subj = [...data.subjects, data.subjOther].filter(Boolean);
     const act  = [...data.activities, data.actOther].filter(Boolean);
     const gpa  = parseFloat(data.gpa).toFixed(2);
-    const prompt = `คุณคือที่ปรึกษาการศึกษาไทย ตอบภาษาไทยเท่านั้น ห้ามใช้ตัวอักษรจีนหรือญี่ปุ่น
-ข้อมูล: ชั้น ${data.grade} แผน${data.plan} GPA ${gpa} วิชา ${subj.join(',')} กิจกรรม ${act.join(',')} ความฝัน ${data.dream}
-ตอบ JSON เท่านั้น ไม่มีข้อความอื่น:
-{"summary":"สรุปบุคลิกภาพ","faculties":[{"rank":1,"name":"คณะวิศวกรรมศาสตร์","match":90,"reason":"เหตุผล","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"จุฬาฯ","program":"สาขา","note":"หมายเหตุ"}]}],"roadmap":[{"phase":"ม.ปลาย","title":"สิ่งที่ทำ","items":["รายการ1","รายการ2"]}],"tip":"คำแนะนำ"}
-กฎ: 3 คณะ แต่ละคณะ 3 มหาวิทยาลัยในไทย roadmap 3 ช่วง ใช้ชื่อคณะจริง`;
+    const prompt = `ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น ห้ามใช้ภาษาจีนญี่ปุ่น ห้าม newline ใน string value ทุกค่าต้องอยู่ในบรรทัดเดียว
+นักเรียน: ชั้น ${data.grade} แผน${data.plan} GPA ${gpa} วิชา ${subj.join(',')} กิจกรรม ${act.join(',')} ความฝัน ${data.dream}
+โครงสร้าง JSON (ห้ามเปลี่ยน key ห้ามเพิ่ม field):
+{"summary":"x","faculties":[{"rank":1,"name":"คณะวิศวกรรมศาสตร์","match":90,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":2,"name":"x","match":80,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":3,"name":"x","match":70,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]}],"roadmap":[{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]}],"tip":"x"}
+แทน x ด้วยข้อมูลจริง ชื่อคณะต้องเป็นชื่อจริงเช่น คณะแพทยศาสตร์ คณะวิศวกรรมศาสตร์ คณะวิทยาการคอมพิวเตอร์`;
 
     setLoading(true);
     try {
@@ -435,11 +435,38 @@ function App() {
       const json = await res.json();
       if(!res.ok) throw new Error(json.error?.message||'Error '+res.status);
       let txt = json.choices[0].message.content;
+      // clean JSON
       txt = txt.replace(/```json/g,'').replace(/```/g,'').trim();
-      const s=txt.indexOf('{'),e=txt.lastIndexOf('}');
+      const s=txt.indexOf('{'), e=txt.lastIndexOf('}');
       if(s>-1&&e>-1) txt=txt.substring(s,e+1);
-      txt = txt.replace(/[\r\n\t]/g,' ').replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
-      const r = JSON.parse(txt);
+      // remove all control chars and fix common issues
+      txt = txt
+        .replace(/\r\n/g,' ').replace(/\r/g,' ').replace(/\n/g,' ').replace(/\t/g,' ')
+        .replace(/[\x00-\x1F\x7F]/g,' ')
+        .replace(/,\s*}/g,'}').replace(/,\s*]/g,']')
+        .replace(/([{,]\s*"[^"]*"\s*:\s*")([^"]*?)("\s*[,}])/g, (m,a,b,c)=>a+b.replace(/"/g,"'")+c);
+      let r;
+      try { r = JSON.parse(txt); }
+      catch(e1) {
+        // retry with stricter prompt
+        const res2 = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+          body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[
+            {role:'user',content:prompt},
+            {role:'assistant',content:txt},
+            {role:'user',content:'JSON ที่ตอบมามี syntax error กรุณาตอบ JSON ที่ถูกต้องใหม่อีกครั้ง ห้ามมี newline ใน string values'}
+          ],max_tokens:2000,temperature:0.2})
+        });
+        const json2 = await res2.json();
+        let txt2 = json2.choices[0].message.content;
+        txt2 = txt2.replace(/```json/g,'').replace(/```/g,'').trim();
+        const s2=txt2.indexOf('{'),e2=txt2.lastIndexOf('}');
+        if(s2>-1&&e2>-1) txt2=txt2.substring(s2,e2+1);
+        txt2 = txt2.replace(/[\r\n\t]/g,' ').replace(/[\x00-\x1F\x7F]/g,' ')
+          .replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
+        r = JSON.parse(txt2);
+      }
       // save to sheets
       try {
         fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
