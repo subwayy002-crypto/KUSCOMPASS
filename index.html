@@ -4,525 +4,855 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KUS Compass</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Sarabun',sans-serif;background:#0f0d1a;color:#fff;min-height:100vh;overflow-x:hidden;}
+/* ── Reset & Base ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#080612;
+  --s1:#0d0a1c;--s2:#120f24;--s3:#18142e;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.10);--b3:rgba(255,255,255,.16);
+  --t1:#f8fafc;--t2:#cbd5e1;--t3:#64748b;--t4:#334155;
+  --p:#5b21b6;--pm:#7c3aed;--pl:#a78bfa;
+  --g:#d4af50;--g2:#f0d060;--ga:rgba(212,175,80,;
+  --r1:6px;--r2:12px;--r3:18px;--r4:24px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 #root{min-height:100vh;}
+
+/* ── Keyframes ── */
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spinR{to{transform:rotate(-360deg)}}
+@keyframes fu{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes sr{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+@keyframes gm{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes ob{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-22px) scale(1.04)}66%{transform:translate(-18px,16px) scale(.97)}}
+@keyframes pop{0%{transform:scale(0) rotate(-10deg)}60%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes glow{0%,100%{box-shadow:0 4px 24px rgba(92,33,183,.45)}50%{box-shadow:0 6px 36px rgba(92,33,183,.65),0 0 48px rgba(212,175,80,.1)}}
+@keyframes ls-in{from{opacity:0;transform:translateX(-8px)}to{opacity:.4;transform:translateX(0)}}
+@keyframes ls-done{to{opacity:1}}
+@keyframes bar{from{width:0}}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(124,58,237,.4);border-radius:2px}
+
+/* ── Orbs ── */
+.orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;}
+.o1{width:60vw;height:60vw;top:-22%;left:-18%;background:radial-gradient(circle,rgba(76,29,149,.55) 0%,transparent 68%);animation:ob 16s ease-in-out infinite;}
+.o2{width:48vw;height:48vw;bottom:-18%;right:-14%;background:radial-gradient(circle,rgba(109,40,217,.38) 0%,transparent 65%);animation:ob 20s ease-in-out infinite reverse;}
+.o3{width:26vw;height:26vw;top:42%;right:12%;background:radial-gradient(circle,rgba(212,175,80,.07) 0%,transparent 70%);animation:ob 11s ease-in-out infinite;}
+.grid-o{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.55) 0%,transparent 70%);}
+
+/* ── Nav ── */
+.nav{position:fixed;inset-inline:0;top:0;z-index:200;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(8,6,18,.85);border-bottom:0.5px solid var(--b1);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.nav-brand{display:flex;align-items:center;gap:9px;cursor:pointer;text-decoration:none;}
+.nav-mark{width:24px;height:24px;border-radius:6px;background:var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-word{font-size:14px;font-weight:600;color:var(--t1);letter-spacing:-.2px;}
+.nav-steps{display:flex;align-items:center;gap:6px;}
+.nav-step{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:5px;}
+.nav-step.on{color:var(--t2);}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--b3);}
+.nav-step.on .nav-dot{background:var(--g);}
+.nav-sep{color:var(--b3);font-size:10px;}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.nav-pill{font-size:10px;padding:3px 10px;border-radius:999px;border:0.5px solid rgba(212,175,80,.22);color:rgba(212,175,80,.65);letter-spacing:.5px;}
+.nb{font-size:12px;padding:5px 12px;border-radius:7px;border:0.5px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;}
+.nb:hover{border-color:var(--b3);color:var(--t2);}
+.nb.gold{border-color:rgba(212,175,80,.22);color:rgba(212,175,80,.75);}
+.nb.gold:hover{border-color:rgba(212,175,80,.5);color:var(--g);}
+.nav-pbar{position:absolute;bottom:-1px;left:0;right:0;height:1.5px;background:var(--b1);}
+.nav-pfill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));transition:width .6s cubic-bezier(.4,0,.2,1);}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Sarabun',sans-serif;font-weight:600;border:none;cursor:pointer;transition:all .2s cubic-bezier(.4,0,.2,1);outline:none;text-decoration:none;}
+.btn-p{font-size:15px;padding:12px 28px;border-radius:11px;background:linear-gradient(135deg,var(--p),var(--pm));color:#fff;box-shadow:0 4px 20px rgba(92,33,183,.4);animation:glow 3s ease infinite;}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(92,33,183,.55);}
+.btn-p:active{transform:translateY(0);box-shadow:0 2px 12px rgba(92,33,183,.4);}
+.btn-o{font-size:14px;padding:10px 20px;border-radius:11px;background:transparent;color:var(--t3);border:0.5px solid var(--b2);}
+.btn-o:hover{border-color:var(--b3);color:var(--t2);}
+
+/* ── Inputs ── */
+.inp,.sel,.ta{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:0.5px solid var(--b2);border-radius:10px;color:var(--t1);font-size:14px;font-family:'Sarabun',sans-serif;outline:none;transition:all .18s;-webkit-appearance:none;}
+.inp::placeholder,.ta::placeholder{color:var(--t4);}
+.inp:focus,.sel:focus,.ta:focus{border-color:rgba(124,58,237,.5);background:rgba(124,58,237,.06);box-shadow:0 0 0 3px rgba(124,58,237,.09);}
+.sel{background:rgba(9,6,20,1);}
+.sel option{background:#0c0919;}
+.ta{resize:none;min-height:88px;line-height:1.65;}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:4px;background:rgba(255,255,255,.1);border:none;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--pm),var(--g));border:1.5px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(124,58,237,.45);cursor:pointer;}
+
+/* ── Chip ── */
+.chip{display:flex;align-items:center;gap:7px;padding:9px 13px;border:0.5px solid var(--b1);border-radius:9px;background:rgba(255,255,255,.02);cursor:pointer;user-select:none;transition:all .16s;}
+.chip:hover{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08);transform:translateY(-1px);}
+.chip.on{border-color:rgba(212,175,80,.5);background:rgba(76,29,149,.25);box-shadow:0 2px 10px rgba(212,175,80,.08);}
+.chip-chk{width:14px;height:14px;border-radius:3px;border:0.5px solid var(--b3);display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .16s;flex-shrink:0;}
+.chip.on .chip-chk{background:var(--pm);border-color:rgba(212,175,80,.6);color:#fff;}
+.chip-lbl{font-size:13px;color:var(--t3);transition:color .16s;}
+.chip.on .chip-lbl{color:var(--t1);}
+
+/* ── Progress ── */
+.prog{max-width:660px;margin:0 auto;padding:10px 24px 0;}
+.prog-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:7px;}
+.prog-bar{height:1.5px;background:var(--b1);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--pm),var(--g));transition:width .65s cubic-bezier(.4,0,.2,1);}
+.prog-dots{display:flex;gap:4px;margin-top:7px;}
+.prog-dot{flex:1;height:2px;border-radius:2px;transition:all .35s;}
+
+/* ── Question Card ── */
+.qc{border-radius:14px;border:0.5px solid var(--b1);background:rgba(255,255,255,.02);padding:18px 20px;margin-bottom:10px;transition:border-color .2s;}
+.qc.a{border-color:rgba(124,58,237,.3);}
+.qc-q{font-size:15px;color:var(--t1);margin-bottom:14px;line-height:1.6;font-weight:400;}
+.qc-scale{display:flex;gap:2px;}
+.qc-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px 4px;border-radius:9px;transition:background .15s;}
+.qc-opt:hover{background:rgba(255,255,255,.04);}
+.qc-btn{width:34px;height:34px;border-radius:50%;border:0.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .18s;}
+.qc-btn.s{border-color:rgba(212,175,80,.5);background:linear-gradient(135deg,rgba(92,33,183,.5),rgba(76,29,149,.4));box-shadow:0 0 12px rgba(212,175,80,.15);animation:pop .2s ease;}
+.qc-lbl{font-size:10px;color:var(--t4);text-align:center;line-height:1.3;}
+
+/* ── Glass Card ── */
+.gc{background:rgba(255,255,255,.025);border:0.5px solid var(--b1);border-radius:var(--r3);}
+.gc-gold{background:rgba(212,175,80,.04);border:0.5px solid rgba(212,175,80,.16);border-radius:14px;}
+
+/* ── Summary row ── */
+.sr-row{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start;}
+.sr-k{font-size:11px;color:rgba(212,175,80,.4);letter-spacing:.8px;text-transform:uppercase;min-width:80px;padding-top:2px;flex-shrink:0;}
+.sr-v{font-size:13px;color:var(--t2);line-height:1.55;flex:1;}
+
+/* ── Faculty Card ── */
+.fc{border-radius:var(--r3);overflow:hidden;border:0.5px solid var(--b1);background:rgba(255,255,255,.02);transition:all .22s cubic-bezier(.4,0,.2,1);}
+.fc:hover{border-color:rgba(212,175,80,.2);transform:translateY(-2px);box-shadow:0 14px 40px rgba(76,29,149,.18);}
+.fc.top{border-color:rgba(212,175,80,.25);box-shadow:0 4px 20px rgba(212,175,80,.06);}
+.fc-head{display:flex;align-items:center;gap:12px;padding:18px 20px;cursor:pointer;}
+.fc-rank{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;}
+.match-bar{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;flex:1;}
+.match-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--pm),var(--g));transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+.match-num{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--g),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Sarabun',sans-serif;}
+.fc-body{padding:0 20px 20px;border-top:0.5px solid var(--b1);}
+.ctag{display:inline-flex;align-items:center;font-size:11px;padding:4px 11px;background:rgba(124,58,237,.15);border:0.5px solid rgba(124,58,237,.25);border-radius:999px;color:rgba(212,175,80,.8);}
+
+/* ── Uni card ── */
+.uc{padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.02);border:0.5px solid var(--b1);transition:all .18s;}
+.uc:hover{border-color:rgba(212,175,80,.15);transform:translateY(-1px);}
+
+/* ── Timeline ── */
+.tl-dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--pm),var(--g));flex-shrink:0;box-shadow:0 0 8px rgba(212,175,80,.3);}
+.tl-line{width:1.5px;flex:1;background:linear-gradient(to bottom,rgba(124,58,237,.35),rgba(212,175,80,.06));margin:3px 4.25px;}
+
+/* ── RIASEC bar ── */
+.rb{height:6px;background:var(--b1);border-radius:3px;overflow:hidden;flex:1;}
+.rb-f{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+
+/* ── Loading ── */
+.ls{display:flex;align-items:center;gap:10px;padding:8px 0;opacity:.3;transition:opacity .4s;}
+.ls.d{opacity:1;}
+.ls-ico{width:20px;height:20px;border-radius:50%;border:0.5px solid var(--b3);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all .3s;}
+.ls.d .ls-ico{background:linear-gradient(135deg,var(--pm),var(--g));border-color:transparent;animation:pop .3s ease;}
+
+/* ── Section header ── */
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:0.5px solid var(--b1);}
+.sh-ico{width:30px;height:30px;border-radius:8px;background:rgba(124,58,237,.2);border:0.5px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.sh-t{font-size:16px;font-weight:700;color:var(--t1);margin:0;}
+
+/* ── Eyebrow ── */
+.eye{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g);margin-bottom:9px;display:block;opacity:.85;}
+
+/* ── Label ── */
+.lbl{display:block;font-size:12px;font-weight:500;color:var(--t3);margin-bottom:7px;letter-spacing:.2px;}
+
+/* ── Footer ── */
+.footer{position:relative;z-index:1;border-top:0.5px solid var(--b1);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;}
+.footer-l{font-size:11px;color:var(--t4);}
+.footer-r{display:flex;gap:16px;}
+.footer-r a{font-size:11px;color:var(--t4);text-decoration:none;transition:color .15s;}
+.footer-r a:hover{color:var(--t3);}
+
+@media(max-width:640px){
+  .nav{padding:0 16px;}
+  .hide-sm{display:none!important;}
+  .two{grid-template-columns:1fr!important;}
+  .hero-h{font-size:clamp(58px,16vw,82px)!important;}
+  .qc-lbl{display:none;}
+}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef} = React;
+const GK = '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';
+const SH = 'https://script.google.com/macros/s/AKfycbyBVdS7D6qMUKCacdljclXIksFgVHYKGkVRRG9xY8Te6yGA0bpAyIFJ8jZhFZTFaoD5/exec';
 
-const GROQ_KEY  = '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';
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyBVdS7D6qMUKCacdljclXIksFgVHYKGkVRRG9xY8Te6yGA0bpAyIFJ8jZhFZTFaoD5/exec';
-
-/* ─── Holland RIASEC questions ─── */
-const RIASEC_Q = [
-  {id:'R1',type:'R',text:'ฉันชอบซ่อมแซมหรือสร้างสิ่งของด้วยมือ'},
-  {id:'R2',type:'R',text:'ฉันชอบทำกิจกรรมกลางแจ้งและใช้ร่างกาย'},
-  {id:'I1',type:'I',text:'ฉันชอบวิเคราะห์ข้อมูลและหาคำตอบจากหลักฐาน'},
-  {id:'I2',type:'I',text:'ฉันชอบทดลองและตั้งสมมติฐานเพื่อพิสูจน์'},
-  {id:'A1',type:'A',text:'ฉันชอบสร้างสรรค์งานศิลปะ ดนตรี หรือเขียนเรื่อง'},
-  {id:'A2',type:'A',text:'ฉันชอบแสดงออกและคิดนอกกรอบ'},
-  {id:'S1',type:'S',text:'ฉันชอบช่วยเหลือและพูดคุยกับผู้อื่น'},
-  {id:'S2',type:'S',text:'ฉันชอบสอนหรืออธิบายให้คนอื่นเข้าใจ'},
-  {id:'E1',type:'E',text:'ฉันชอบโน้มน้าวและนำทีมให้บรรลุเป้าหมาย'},
-  {id:'E2',type:'E',text:'ฉันชอบวางแผนธุรกิจและการขาย'},
-  {id:'C1',type:'C',text:'ฉันชอบจัดระเบียบข้อมูลและทำงานตามขั้นตอน'},
-  {id:'C2',type:'C',text:'ฉันชอบความถูกต้อง แม่นยำ และทำตามกฎ'},
+/* ── Data (unchanged) ── */
+const RQ=[
+  {id:'R1',t:'R',q:'ว่างๆ ชอบทำอะไรมือมากกว่า เช่น ซ่อมของ ต่อของ หรือทำงานฝีมือ?'},
+  {id:'R2',t:'R',q:'ถ้าให้เลือก ชอบทำงานกับเครื่องมือ อุปกรณ์ หรือสิ่งของจับต้องได้มากแค่ไหน?'},
+  {id:'R3',t:'R',q:'อยากทำงานที่ได้ลงมือจริง เช่น ช่างเทคนิค วิศวกรภาคสนาม หรือเกษตรกรไหม?'},
+  {id:'I1',t:'I',q:'เวลาเจอคำถามยากๆ ชอบค้นคว้าหาคำตอบเองมากแค่ไหน?'},
+  {id:'I2',t:'I',q:'ชอบวิเคราะห์ข้อมูล แก้โจทย์ซับซ้อน หรือหาความสัมพันธ์ระหว่างสิ่งต่างๆ ไหม?'},
+  {id:'I3',t:'I',q:'เคยฝันอยากเป็นหมอ นักวิจัย โปรแกรมเมอร์ หรือนักวิทยาศาสตร์ไหม?'},
+  {id:'A1',t:'A',q:'ชีวิตประจำวันมีงานสร้างสรรค์ไหม เช่น วาดรูป ถ่ายภาพ แต่งเพลง หรือเขียนเรื่อง?'},
+  {id:'A2',t:'A',q:'คิดว่าตัวเองเป็นคนมีจินตนาการ ชอบคิดนอกกรอบ และแสดงออกผ่านงานศิลปะไหม?'},
+  {id:'A3',t:'A',q:'อยากทำงานเป็นนักออกแบบ ศิลปิน นักเขียน หรืองานสื่อสร้างสรรค์ไหม?'},
+  {id:'S1',t:'S',q:'ชอบอยู่กับคนอื่น พูดคุย ช่วยเหลือ หรือทำงานเป็นทีมมากกว่าทำคนเดียวไหม?'},
+  {id:'S2',t:'S',q:'เพื่อนๆ มักมาขอคำปรึกษา หรือคิดว่าตัวเองอธิบายสิ่งต่างๆ ให้คนอื่นเข้าใจได้ดีไหม?'},
+  {id:'S3',t:'S',q:'อยากทำงานที่ได้ช่วยเหลือคน เช่น ครู พยาบาล นักจิตวิทยา หรือนักสังคมสงเคราะห์ไหม?'},
+  {id:'E1',t:'E',q:'ชอบเป็นคนนำ จัดการทีม หรือโน้มน้าวให้คนอื่นเห็นด้วยกับไอเดียของตัวเองไหม?'},
+  {id:'E2',t:'E',q:'มั่นใจในการตัดสินใจ กล้านำเสนอต่อหน้าคน และชอบบรรยากาศที่มีการแข่งขันไหม?'},
+  {id:'E3',t:'E',q:'อยากเป็นนักธุรกิจ ทนายความ นักการตลาด หรือทำงานบริหารจัดการองค์กรไหม?'},
+  {id:'C1',t:'C',q:'ชอบจัดระเบียบ วางแผน และทำงานตามขั้นตอนที่ชัดเจนมากกว่าทำแบบ improvise ไหม?'},
+  {id:'C2',t:'C',q:'ละเอียดรอบคอบ ชอบตรวจสอบความถูกต้อง และสบายใจกับงานที่มีกฎและโครงสร้างชัดเจนไหม?'},
+  {id:'C3',t:'C',q:'สนใจงานด้านบัญชี การเงิน สถิติ หรือจัดการข้อมูลไหม?'},
 ];
-const RIASEC_LABEL = {R:'Realistic (ช่างฝีมือ)',I:'Investigative (นักวิจัย)',A:'Artistic (ศิลปิน)',S:'Social (นักสังคม)',E:'Enterprising (ผู้นำ)',C:'Conventional (นักจัดการ)'};
+const RL={R:'Realistic',I:'Investigative',A:'Artistic',S:'Social',E:'Enterprising',C:'Conventional'};
+const RT={R:'ช่างฝีมือ',I:'นักวิจัย',A:'ศิลปิน',S:'นักสังคม',E:'ผู้นำ',C:'นักจัดการ'};
+const RC={R:'#16a34a',I:'#2563eb',A:'#7c3aed',S:'#0891b2',E:'#d97706',C:'#9333ea'};
+const SUBJ=['คณิตศาสตร์','ฟิสิกส์','เคมี','ชีววิทยา','คอมพิวเตอร์','ภาษาอังกฤษ','ภาษาไทย','สังคมศึกษา','ประวัติศาสตร์','ศิลปะ','ดนตรี','พลศึกษา','เศรษฐศาสตร์','จิตวิทยา'];
+const ACTS=['เขียนโปรแกรม','เล่นเกม','วาดรูป/ออกแบบ','อ่านหนังสือ','เล่นกีฬา','ดูหนัง/ซีรีส์','เล่นดนตรี','ทำอาหาร','ถ่ายภาพ','เขียน/บล็อก','ทำธุรกิจ','ทำจิตอาสา','ทดลองสิ่งใหม่','ท่องเที่ยว'];
 
-const SUBJECTS   = ['คณิตศาสตร์','ฟิสิกส์','เคมี','ชีววิทยา','คอมพิวเตอร์','ภาษาอังกฤษ','ภาษาไทย','สังคมศึกษา','ประวัติศาสตร์','ศิลปะ','ดนตรี','พลศึกษา','เศรษฐศาสตร์','จิตวิทยา'];
-const ACTIVITIES = ['เขียนโปรแกรม','เล่นเกม','วาดรูป/ออกแบบ','อ่านหนังสือ','เล่นกีฬา','ดูหนัง/ซีรีส์','เล่นดนตรี','ทำอาหาร','ถ่ายภาพ','เขียน/บล็อก','ทำธุรกิจ','ทำจิตอาสา','ทดลองสิ่งใหม่','ท่องเที่ยว'];
-
-/* ─── Compute RIASEC top types ─── */
-function computeRiasec(scores){
-  const totals={R:0,I:0,A:0,S:0,E:0,C:0};
-  RIASEC_Q.forEach(q=>{ totals[q.type]+=(scores[q.id]||0); });
-  return Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join('');
+function calcR(sc){
+  var t={R:0,I:0,A:0,S:0,E:0,C:0};
+  RQ.forEach(function(q){t[q.t]+=(sc[q.id]||0);});
+  return Object.entries(t).sort(function(a,b){return b[1]-a[1];});
 }
 
-/* ─── Colours ─── */
-const C={purple:'#4c1d95',mid:'#6d28d9',gold:'#d4af50',goldf:'rgba(212,175,80,',bg:'#0f0d1a'};
-
-/* ─── Chip ─── */
-function Chip({label,selected,onToggle}){
+/* ── Background ── */
+function Bg(){
   return(
-    <div onClick={onToggle} style={{
-      display:'flex',alignItems:'center',gap:8,padding:'10px 13px',
-      border:`1.5px solid ${selected?C.gold:'rgba(212,175,80,.13)'}`,
-      borderRadius:10,cursor:'pointer',userSelect:'none',
-      background:selected?'rgba(76,29,149,.32)':'rgba(255,255,255,.03)',
-      transition:'all .15s',animation:selected?'pop .2s ease':'none',
-    }}>
-      <div style={{width:16,height:16,borderRadius:4,flexShrink:0,border:`1.5px solid ${selected?C.gold:'rgba(255,255,255,.2)'}`,background:selected?C.mid:'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff'}}>
-        {selected?'✓':''}
-      </div>
-      <span style={{fontSize:13,color:selected?'#f1f5f9':'#94a3b8'}}>{label}</span>
+    <div className="orbs">
+      <div className="orb o1"/><div className="orb o2"/><div className="orb o3"/>
+      <div className="grid-o"/>
     </div>
   );
 }
 
-/* ─── RIASEC Slider ─── */
-function RiasecSlider({q,value,onChange}){
-  const labels=['ไม่เลย','น้อย','ปานกลาง','มาก','มากที่สุด'];
+/* ── Navbar ── */
+function Nav({screen,step,total,onHome,onRedo}){
+  var steps=['ข้อมูล','วิชา','RIASEC·I','RIASEC·II','ยืนยัน'];
+  var pct=step&&total?Math.round(step/total*100):0;
   return(
-    <div style={{marginBottom:20,padding:'16px 18px',background:'rgba(76,29,149,.08)',border:'1px solid rgba(212,175,80,.1)',borderRadius:12}}>
-      <p style={{fontSize:14,color:'#e2e8f0',marginBottom:12,lineHeight:1.55}}>{q.text}</p>
-      <input type="range" min={0} max={4} step={1} value={value}
-        onChange={e=>onChange(q.id,+e.target.value)}
-        style={{width:'100%',accentColor:C.gold,cursor:'pointer',marginBottom:6}}/>
-      <div style={{display:'flex',justifyContent:'space-between'}}>
-        {labels.map((l,i)=>(
-          <span key={i} style={{fontSize:10,color:value===i?C.gold:'rgba(255,255,255,.3)',fontWeight:value===i?700:400,transition:'color .15s'}}>{l}</span>
-        ))}
+    <nav className="nav">
+      <div className="nav-brand" onClick={onHome}>
+        <div className="nav-mark">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1.5L10.5 10H1.5L6 1.5Z" fill="#d4af50" opacity=".9"/>
+          </svg>
+        </div>
+        <span className="nav-word">KUS Compass</span>
       </div>
-    </div>
+
+      {screen==='form'&&(
+        <div className="nav-steps hide-sm">
+          {steps.map(function(s,i){return(
+            <React.Fragment key={i}>
+              {i>0&&<span className="nav-sep">›</span>}
+              <div className={'nav-step'+(step>i+1?' done':step===i+1?' on':'')}>
+                <div className="nav-dot"/>
+                <span>{s}</span>
+              </div>
+            </React.Fragment>
+          );})}
+        </div>
+      )}
+
+      <div className="nav-r">
+        {screen==='home'&&<span className="nav-pill hide-sm">Senior Project 2026</span>}
+        {screen==='form'&&<button className="nb" onClick={onHome}>ออก</button>}
+        {screen==='result'&&(
+          <>
+            <button className="nb" onClick={onRedo}>ทำใหม่</button>
+            <button className="nb gold" onClick={function(){window.print();}}>พิมพ์</button>
+          </>
+        )}
+      </div>
+
+      {screen==='form'&&(
+        <div className="nav-pbar">
+          <div className="nav-pfill" style={{width:pct+'%'}}/>
+        </div>
+      )}
+    </nav>
   );
 }
 
-/* ─── Progress ─── */
-function Progress({step,total=5}){
-  const pct=Math.round(step/total*100);
-  return(
-    <div style={{maxWidth:680,margin:'0 auto',padding:'16px 20px 0'}}>
-      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:`${C.goldf}.5)`,marginBottom:6}}>
-        <span>ขั้นตอน {step} จาก {total}</span><span>{pct}%</span>
-      </div>
-      <div style={{height:3,background:'rgba(255,255,255,.07)',borderRadius:3,overflow:'hidden'}}>
-        <div style={{height:'100%',width:pct+'%',background:`linear-gradient(90deg,${C.purple},${C.gold})`,transition:'width .5s ease',borderRadius:3}}/>
-      </div>
-      <div style={{display:'flex',gap:6,marginTop:8}}>
-        {Array.from({length:total},(_,i)=>(
-          <div key={i} style={{flex:1,height:3,borderRadius:3,background:i<step?C.gold:'rgba(255,255,255,.08)',transition:'background .3s'}}/>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Loading ─── */
+/* ── Loading ── */
 function Loading(){
-  const [msg,setMsg]=useState(0);
-  const msgs=['กำลังวิเคราะห์บุคลิกภาพ RIASEC...','จับคู่กับฐานข้อมูลคณะในไทย...','สร้าง Roadmap ส่วนตัวของคุณ...','เกือบเสร็จแล้ว!'];
-  useEffect(()=>{const t=setInterval(()=>setMsg(m=>(m+1)%msgs.length),2000);return()=>clearInterval(t);},[]);
+  var steps=['วิเคราะห์ข้อมูล RIASEC','จับคู่คณะที่เหมาะสม','ค้นหามหาวิทยาลัย','สร้าง Roadmap ส่วนตัว','เสร็จสิ้น'];
+  var [done,setDone]=useState(-1);
+  useEffect(function(){
+    var i=0,t=setInterval(function(){if(i<steps.length){setDone(i);i++;}},900);
+    return function(){clearInterval(t);};
+  },[]);
   return(
-    <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(15,13,26,.97)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
-      <div style={{width:56,height:56,border:'3px solid rgba(212,175,80,.15)',borderTopColor:C.gold,borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
-      <div style={{textAlign:'center'}}>
-        <div style={{fontSize:16,color:'#e2e8f0',marginBottom:6,animation:'pulse 2s ease infinite'}}>{msgs[msg]}</div>
-        <div style={{fontSize:12,color:'rgba(255,255,255,.3)'}}>วิเคราะห์ด้วย Holland RIASEC Theory</div>
+    <div style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(8,6,18,.97)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <Bg/>
+      <div style={{position:'relative',zIndex:1,textAlign:'center',maxWidth:340,width:'100%',padding:'0 24px'}}>
+        <div style={{position:'relative',width:64,height:64,margin:'0 auto 26px'}}>
+          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:'2px solid transparent',borderTopColor:'var(--g)',animation:'spin 1s linear infinite'}}/>
+          <div style={{position:'absolute',inset:8,borderRadius:'50%',border:'1.5px solid transparent',borderTopColor:'rgba(124,58,237,.45)',animation:'spinR 1.7s linear infinite'}}/>
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🧠</div>
+        </div>
+        <p style={{fontSize:17,fontWeight:600,marginBottom:4}}>AI กำลังวิเคราะห์</p>
+        <p style={{fontSize:12,color:'var(--t3)',marginBottom:26}}>Holland RIASEC Theory + Llama 3.3</p>
+        <div className="gc" style={{padding:'16px 20px',textAlign:'left'}}>
+          {steps.map(function(s,i){return(
+            <div key={i} className={'ls'+(i<=done?' d':'')}>
+              <div className="ls-ico">{i<=done?'✓':''}</div>
+              <span style={{fontSize:13,color:i<=done?'var(--t1)':'var(--t3)'}}>{s}</span>
+            </div>
+          );})}
+        </div>
       </div>
     </div>
   );
 }
 
-/* ─── HOME ─── */
+/* ── Counter ── */
+function Counter({target}){
+  var [v,setV]=useState(0);
+  useEffect(function(){
+    var c=0,s=target/50,t=setInterval(function(){c=Math.min(c+s,target);setV(Math.round(c));if(c>=target)clearInterval(t);},18);
+    return function(){clearInterval(t);};
+  },[target]);
+  return React.createElement('span',{className:'match-num'},v+'%');
+}
+
+/* ── RIASEC Chart ── */
+function RChart({sc}){
+  var [vis,setVis]=useState(false);
+  useEffect(function(){var t=setTimeout(function(){setVis(true);},120);return function(){clearTimeout(t);};},[]);
+  var sorted=calcR(sc),mx=Math.max.apply(null,sorted.map(function(e){return e[1];}));
+  if(!mx)return null;
+  return(
+    <div style={{borderRadius:16,border:'0.5px solid rgba(212,175,80,.14)',background:'rgba(212,175,80,.03)',padding:'20px 22px',marginBottom:28}}>
+      <span className="eye" style={{marginBottom:14}}>RIASEC Profile</span>
+      {sorted.map(function(e,i){
+        var c=e[0],s=e[1],pct=Math.round(s/mx*100),top=i===0;
+        return(
+          <div key={c} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+            <div style={{width:26,height:26,borderRadius:7,background:RC[c],display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'#fff',flexShrink:0}}>{c}</div>
+            <span style={{fontSize:11,color:top?'var(--g)':'var(--t3)',width:64,flexShrink:0}}>{RT[c]}</span>
+            <div className="rb"><div className="rb-f" style={{width:vis?pct+'%':'0%',background:top?'linear-gradient(90deg,'+RC[c]+',var(--g))':RC[c]}}/></div>
+            <span style={{fontSize:11,color:top?'var(--g)':'var(--t4)',width:30,textAlign:'right',fontWeight:top?600:400,flexShrink:0}}>{s*25}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Chip ── */
+function Chip({label,on,toggle}){
+  return(
+    <div className={'chip'+(on?' on':'')} onClick={toggle}>
+      <div className="chip-chk">{on?'✓':''}</div>
+      <span className="chip-lbl">{label}</span>
+    </div>
+  );
+}
+
+/* ── Progress ── */
+function Prog({step,total}){
+  var pct=Math.round(step/total*100);
+  var labels=['ข้อมูล','วิชา','RIASEC I','RIASEC II','ยืนยัน'];
+  return(
+    <div className="prog">
+      <div className="prog-row">
+        <span style={{color:'var(--g)',fontWeight:500,fontSize:12}}>{labels[step-1]||''}</span>
+        <span style={{color:'var(--t3)',fontSize:11}}>{step} / {total}</span>
+      </div>
+      <div className="prog-bar"><div className="prog-fill" style={{width:pct+'%'}}/></div>
+      <div className="prog-dots">
+        {Array.from({length:total},function(_,i){return(
+          <div key={i} className="prog-dot" style={{background:i<step?(i===step-1?'var(--g)':'var(--pm)'):'var(--b2)',boxShadow:i===step-1?'0 0 6px rgba(212,175,80,.4)':''}}/>
+        );})}
+      </div>
+    </div>
+  );
+}
+
+/* ── HOME ── */
 function Home({onStart}){
   return(
-    <div style={{background:C.bg,minHeight:'100vh'}}>
-      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 20% 10%,rgba(76,29,149,.4) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(109,40,217,.2) 0%,transparent 55%)',pointerEvents:'none'}}/>
-      <nav style={{position:'relative',zIndex:10,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 24px',borderBottom:'1px solid rgba(212,175,80,.15)',background:'rgba(15,13,26,.8)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${C.purple},${C.mid})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:800,color:C.gold}}>K</div>
-          <div>
-            <div style={{fontSize:14,fontWeight:700,color:'#f1f5f9'}}>KUS Compass</div>
-            <div style={{fontSize:11,color:`${C.goldf}.5)`}}>สาธิตแห่งมหาวิทยาลัยเกษตรศาสตร์</div>
-          </div>
-        </div>
-        <span style={{fontSize:11,padding:'5px 12px',borderRadius:999,border:`1px solid ${C.goldf}.3)`,color:C.gold}}>Senior Project 2026</span>
-      </nav>
+    <div style={{background:'var(--bg)',minHeight:'100vh'}}>
+      <Bg/>
+      <div style={{position:'relative',zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100vh',textAlign:'center',padding:'80px 24px 60px'}}>
 
-      <div style={{position:'relative',zIndex:1,textAlign:'center',padding:'70px 24px 60px',animation:'fadeUp .6s ease'}}>
-        <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'7px 18px',borderRadius:999,border:`1px solid ${C.goldf}.3)`,background:`${C.goldf}.07)`,color:C.gold,fontSize:13,marginBottom:24}}>
+        {/* Badge */}
+        <div style={{display:'inline-flex',alignItems:'center',gap:7,padding:'5px 16px',borderRadius:999,border:'0.5px solid rgba(212,175,80,.2)',background:'rgba(212,175,80,.05)',color:'rgba(212,175,80,.8)',fontSize:11,letterSpacing:.5,marginBottom:32,animation:'fu .5s ease both'}}>
           🎓 โรงเรียนสาธิตแห่งมหาวิทยาลัยเกษตรศาสตร์
         </div>
-        <h1 style={{fontSize:'clamp(52px,11vw,110px)',fontWeight:800,lineHeight:.95,letterSpacing:-2,marginBottom:20}}>
-          <span style={{background:`linear-gradient(135deg,${C.gold},#f0d060,#b8973a)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>KUS</span>
-          <br/><span style={{color:'#f1f5f9'}}>Compass</span>
+
+        {/* Hero */}
+        <h1 className="hero-h" style={{fontSize:'clamp(64px,13vw,124px)',fontWeight:900,lineHeight:.88,letterSpacing:'-0.04em',marginBottom:2,animation:'fu .6s .06s ease both'}}>
+          <span style={{background:'linear-gradient(135deg,var(--g) 0%,var(--g2) 45%,var(--g) 100%)',backgroundSize:'200%',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',animation:'gm 4s ease infinite'}}>KUS</span>
         </h1>
-        <p style={{fontSize:'clamp(15px,2.5vw,19px)',color:'rgba(255,255,255,.5)',lineHeight:1.7,maxWidth:500,margin:'0 auto 16px'}}>
-          ค้นพบ<strong style={{color:'rgba(255,255,255,.85)'}}>คณะและมหาวิทยาลัย</strong>ที่ใช่<br/>
-          ด้วย <strong style={{color:C.gold}}>Holland RIASEC Theory</strong> + AI
+        <h1 className="hero-h" style={{fontSize:'clamp(64px,13vw,124px)',fontWeight:900,lineHeight:.94,letterSpacing:'-0.04em',color:'var(--t1)',marginBottom:26,animation:'fu .6s .1s ease both'}}>
+          Compass
+        </h1>
+
+        <p style={{fontSize:'clamp(14px,2vw,18px)',color:'var(--t3)',maxWidth:480,lineHeight:1.8,marginBottom:6,animation:'fu .6s .15s ease both'}}>
+          ค้นพบ<strong style={{color:'var(--t2)',fontWeight:500}}>คณะและมหาวิทยาลัย</strong>ที่ใช่สำหรับคุณ
         </p>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:36,fontSize:12,color:'rgba(255,255,255,.3)'}}>
-          <div style={{width:6,height:6,borderRadius:'50%',background:C.gold}}/>
-          <span>อ้างอิงทฤษฎีแนะแนวอาชีพมาตรฐานสากล</span>
-        </div>
-        <button onClick={onStart} style={{padding:'15px 44px',fontSize:16,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:14,background:`linear-gradient(135deg,${C.purple},${C.mid})`,color:'#fff',cursor:'pointer',boxShadow:'0 8px 28px rgba(76,29,149,.45)',transition:'transform .2s,box-shadow .2s'}}
-          onMouseEnter={e=>{e.target.style.transform='translateY(-3px)';e.target.style.boxShadow='0 12px 36px rgba(76,29,149,.6)';}}
-          onMouseLeave={e=>{e.target.style.transform='translateY(0)';e.target.style.boxShadow='0 8px 28px rgba(76,29,149,.45)';}}>
-          เริ่มค้นหาคณะของฉัน →
-        </button>
+        <p style={{fontSize:11,color:'var(--t4)',marginBottom:38,animation:'fu .6s .18s ease both'}}>
+          วิเคราะห์ด้วย Holland RIASEC Theory · Holland (1959)
+        </p>
 
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,maxWidth:600,margin:'52px auto 0',padding:'20px',border:`1px solid ${C.goldf}.18)`,borderRadius:20,background:'rgba(76,29,149,.08)'}}>
-          {[['🧠','Holland RIASEC','วิเคราะห์บุคลิกภาพ'],['🎓','50+ คณะ','ครอบคลุมทั่วไทย'],['⚡','5 นาที','ได้ผลลัพธ์']].map(([ic,t,s])=>(
-            <div key={t} style={{textAlign:'center',padding:'12px 8px'}}>
-              <div style={{fontSize:22,marginBottom:6}}>{ic}</div>
-              <div style={{fontSize:14,fontWeight:700,color:'#f1f5f9',marginBottom:2}}>{t}</div>
-              <div style={{fontSize:11,color:`${C.goldf}.45)`}}>{s}</div>
+        {/* CTA */}
+        <div style={{animation:'fu .6s .23s ease both',marginBottom:52}}>
+          <button className="btn btn-p" onClick={onStart} style={{fontSize:15,padding:'13px 40px'}}>
+            เริ่มค้นหาคณะของฉัน →
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'center',animation:'fu .6s .28s ease both'}}>
+          {[['50+','คณะ'],['30+','มหาวิทยาลัย'],['18 ข้อ','RIASEC'],['5 นาที','ผลลัพธ์']].map(function(s){return(
+            <div key={s[1]} style={{padding:'12px 20px',borderRadius:12,border:'0.5px solid var(--b1)',background:'rgba(255,255,255,.02)',textAlign:'center',minWidth:90}}>
+              <div style={{fontSize:20,fontWeight:700,color:'var(--g)',fontFamily:'Sarabun,sans-serif'}}>{s[0]}</div>
+              <div style={{fontSize:11,color:'var(--t4)',marginTop:2}}>{s[1]}</div>
             </div>
-          ))}
+          );})}
         </div>
 
-        <div style={{marginTop:40,padding:'20px 24px',borderTop:`1px solid ${C.goldf}.1)`,borderBottom:`1px solid ${C.goldf}.1)`,background:'rgba(76,29,149,.05)'}}>
-          <p style={{fontSize:10,letterSpacing:3,color:'rgba(255,255,255,.2)',textTransform:'uppercase',marginBottom:8}}>คำขวัญประจำโรงเรียน</p>
-          <p style={{fontSize:'clamp(13px,2.2vw,18px)',fontWeight:700,color:'rgba(255,255,255,.6)',letterSpacing:2}}>
-            {['รอบรู้','สู้ชีวิต','จิตมั่นคง','ดำรงคุณธรรม'].map((w,i)=><span key={i}><span style={{color:C.gold}}>{w}</span>{i<3?' · ':''}</span>)}
+        {/* Motto */}
+        <div style={{marginTop:48,padding:'14px 24px',borderRadius:12,border:'0.5px solid var(--b1)',background:'rgba(255,255,255,.015)',animation:'fu .6s .33s ease both'}}>
+          <p style={{fontSize:10,letterSpacing:3,color:'var(--t4)',textTransform:'uppercase',marginBottom:6}}>คำขวัญประจำโรงเรียน</p>
+          <p style={{fontSize:'clamp(11px,1.8vw,13px)',fontWeight:500,color:'var(--t4)',letterSpacing:2}}>
+            {['รอบรู้','สู้ชีวิต','จิตมั่นคง','ดำรงคุณธรรม'].map(function(w,i){return(
+              <span key={i}><span style={{color:'rgba(212,175,80,.5)'}}>{w}</span>{i<3?' · ':''}</span>
+            );})}
           </p>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="footer" style={{position:'relative',zIndex:1}}>
+        <span className="footer-l">© 2026 KUS Compass · Senior Project</span>
+        <div className="footer-r">
+          <a href="#">Holland (1959)</a>
+          <a href="#">Groq AI</a>
+          <a href="#">GitHub</a>
+        </div>
+      </footer>
     </div>
   );
 }
 
-/* ─── FORM WRAPPER ─── */
-function FormPage({onDone,onHome}){
-  const [step,setStep]=useState(1);
-  const [loading,setLoading]=useState(false);
-  const [data,setData]=useState({
+/* ── FORM ── */
+function Form({onDone,onHome,setStep:setNavStep,setTotal}){
+  var [step,setStep]=useState(1);
+  var [loading,setLoading]=useState(false);
+  var [d,setD]=useState({
     name:'',room:'',num:'',gpa:'3',grade:'',plan:'',dream:'',
-    subjects:new Set(),subjOther:'',
-    activities:new Set(),actOther:'',
-    riasec:{},
+    subj:new Set(),sO:'',act:new Set(),aO:'',ri:{}
   });
-  const update=patch=>setData(d=>({...d,...patch}));
-  const toggleSet=(key,v)=>setData(d=>{const s=new Set(d[key]);s.has(v)?s.delete(v):s.add(v);return{...d,[key]:s};});
+  function upd(p){setD(function(prev){return Object.assign({},prev,p);});}
+  function tog(k,v){setD(function(prev){var s=new Set(prev[k]);s.has(v)?s.delete(v):s.add(v);var o={};o[k]=s;return Object.assign({},prev,o);});}
 
-  const wrap={position:'relative',zIndex:1,maxWidth:660,margin:'0 auto',padding:'20px 20px 80px'};
-  const h2={fontSize:'clamp(20px,4vw,26px)',fontWeight:800,color:'#f1f5f9',lineHeight:1.3,marginBottom:7};
-  const sub={color:'rgba(255,255,255,.4)',fontSize:14,lineHeight:1.6,marginBottom:22};
-  const inp={width:'100%',padding:'11px 14px',background:'rgba(255,255,255,.05)',border:'1.5px solid rgba(212,175,80,.15)',borderRadius:10,color:'#f1f5f9',fontSize:14,fontFamily:'Sarabun,sans-serif',outline:'none',transition:'border-color .2s'};
-  const sel={...inp,background:'rgba(30,27,46,1)'};
-  const ta={...inp,resize:'vertical',minHeight:90,lineHeight:1.6};
-  const btnP={width:'100%',padding:'13px',fontSize:15,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:12,background:`linear-gradient(135deg,${C.purple},${C.mid})`,color:'#fff',cursor:'pointer',transition:'opacity .2s'};
-  const btnS={padding:'11px 20px',fontSize:14,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:`1.5px solid ${C.goldf}.2)`,borderRadius:10,background:'transparent',color:`${C.goldf}.7)`,cursor:'pointer'};
-  const row={display:'flex',gap:10,marginTop:20};
-  const tag={fontSize:11,letterSpacing:3,textTransform:'uppercase',color:C.gold,marginBottom:10};
-  const chips={display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(148px,1fr))',gap:8,marginBottom:18};
-  const field={marginBottom:16};
-  const lbl={display:'block',fontSize:13,fontWeight:600,color:'rgba(255,255,255,.7)',marginBottom:7};
+  useEffect(function(){setNavStep&&setNavStep(step);setTotal&&setTotal(5);},[step]);
 
-  const submit=async()=>{
-    const subj=[...data.subjects,data.subjOther].filter(Boolean);
-    const act=[...data.activities,data.actOther].filter(Boolean);
-    const gpa=parseFloat(data.gpa).toFixed(2);
-    const riasecCode=computeRiasec(data.riasec);
-    const riasecDesc=riasecCode.split('').map(c=>RIASEC_LABEL[c]).join(', ');
+  var wrap={maxWidth:640,margin:'0 auto',padding:'0 24px 80px'};
+  var h2={fontSize:'clamp(20px,3.5vw,25px)',fontWeight:700,color:'var(--t1)',lineHeight:1.3,marginBottom:7};
+  var sub={color:'var(--t3)',fontSize:14,lineHeight:1.65,marginBottom:20};
+  var fd={marginBottom:16};
+  var cg={display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(138px,1fr))',gap:6,marginBottom:10};
+  var row={display:'flex',gap:8,marginTop:18};
 
-    const prompt=`คุณคือที่ปรึกษาการศึกษาไทยที่ใช้ Holland RIASEC Theory ในการแนะแนว
-ตอบภาษาไทยเท่านั้น ห้ามใช้ตัวอักษรจีนหรือญี่ปุ่น
+  function go(n){
+    if(n>step){
+      if(step===1&&!d.grade){alert('กรุณาเลือกชั้นเรียน');return;}
+      if(step===2&&d.subj.size===0){alert('กรุณาเลือกวิชาที่ชอบอย่างน้อย 1 วิชา');return;}
+    }
+    setStep(n);window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function submit(){
+    var subj=Array.from(d.subj);if(d.sO)subj.push(d.sO);
+    var act=Array.from(d.act);if(d.aO)act.push(d.aO);
+    var gpa=parseFloat(d.gpa).toFixed(2);
+    var rs=calcR(d.ri);
+    var riasecCode=rs.slice(0,3).map(function(e){return e[0];}).join('');
+    var riasecDesc=riasecCode.split('').map(function(c){return RL[c];}).join(', ');
+
+    const prompt=`คุณคือที่ปรึกษาการศึกษาไทยที่เชี่ยวชาญด้านการแนะแนวโดยใช้ Holland RIASEC Theory
+ตอบภาษาไทยเท่านั้น ห้ามใช้ตัวอักษรจีนหรือญี่ปุ่นเด็ดขาด
 
 ข้อมูลนักเรียน:
-- Holland RIASEC Code: ${riasecCode} (${riasecDesc})
+- Holland RIASEC Code: ${code} (${desc})
 - ชั้นเรียน: ${data.grade} แผน${data.plan} GPA ${gpa}
 - วิชาที่ชอบ: ${subj.join(', ')}
 - กิจกรรม: ${act.join(', ')}
 - ความฝัน: ${data.dream}
 
-อ้างอิง Holland RIASEC Theory ในการวิเคราะห์และแนะนำคณะที่เหมาะสมกับ RIASEC Code ของนักเรียน
+คณะในมหาวิทยาลัยไทยที่ควรพิจารณาแยกตาม RIASEC:
+R (Realistic): วิศวกรรมศาสตร์ สถาปัตยกรรมศาสตร์ เกษตรศาสตร์ วนศาสตร์ เทคโนโลยีการเกษตร ประมง สัตวแพทยศาสตร์
+I (Investigative): แพทยศาสตร์ ทันตแพทยศาสตร์ เภสัชศาสตร์ วิทยาศาสตร์ วิทยาการคอมพิวเตอร์ เทคนิคการแพทย์ พยาธิวิทยาคลินิก กายภาพบำบัด วิทยาศาสตร์การกีฬา
+A (Artistic): นิเทศศาสตร์ วารสารศาสตร์ ศิลปกรรมศาสตร์ ดนตรี นาฏศิลป์ ภาพยนตร์ ออกแบบนิเทศศิลป์ สถาปัตยกรรมภายใน
+S (Social): ครุศาสตร์ ศึกษาศาสตร์ พยาบาลศาสตร์ สังคมสงเคราะห์ จิตวิทยา สาธารณสุขศาสตร์ รัฐประศาสนศาสตร์ พัฒนาสังคม
+E (Enterprising): บริหารธุรกิจ การตลาด นิติศาสตร์ รัฐศาสตร์ เศรษฐศาสตร์ การจัดการ การท่องเที่ยวและการโรงแรม
+C (Conventional): บัญชี การเงิน สถิติ คณิตศาสตร์ วิทยาศาสตร์ข้อมูล ระบบสารสนเทศ
+
+เลือกคณะที่ตรงกับ RIASEC Code ของนักเรียน ห้ามแนะนำวิศวกรรมศาสตร์ถ้า Holland Code ไม่มี R หรือ I
 
 ตอบ JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี newline ใน string:
-{"summary":"สรุปบุคลิกภาพตาม Holland RIASEC","riasecCode":"${riasecCode}","riasecDesc":"${riasecDesc}","faculties":[{"rank":1,"name":"คณะวิศวกรรมศาสตร์","match":90,"reason":"เหตุผลที่สอดคล้องกับ RIASEC","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":2,"name":"x","match":80,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":3,"name":"x","match":70,"reason":"x","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]}],"roadmap":[{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]},{"phase":"x","title":"x","items":["x","x","x"]}],"tip":"x"}`;
+{"summary":"สรุปบุคลิกภาพตาม Holland RIASEC 2-3 ประโยค","riasecCode":"${code}","riasecDesc":"${desc}","faculties":[{"rank":1,"name":"คณะที่เหมาะสม","match":90,"reason":"เหตุผลที่สอดคล้องกับ RIASEC Code","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขาจริง","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขาจริง","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขาจริง","note":"จุดเด่น"}]},{"rank":2,"name":"คณะที่สอง","match":80,"reason":"เหตุผล","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":3,"name":"คณะที่สาม","match":70,"reason":"เหตุผล","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]}],"roadmap":[{"phase":"ม.ปลาย (ตอนนี้)","title":"สร้างพื้นฐานให้แข็งแกร่ง","items":["วิชาที่ต้องเน้นและเกรดที่ควรรักษา","กิจกรรมหรือทักษะที่ควรเริ่มพัฒนา","การอ่านหนังสือหรือ resource ที่แนะนำ"]},{"phase":"ก่อน TCAS (ม.6 เทอม 1-2)","title":"เตรียมสอบและสมัคร","items":["วิชาสอบที่ต้องโฟกัส เช่น TPAT TGAT A-Level","เกณฑ์คะแนนขั้นต่ำของคณะเป้าหมาย","Portfolio หรือกิจกรรมที่ควรสะสม"]},{"phase":"หลัง TCAS (ก่อนเข้ามหาวิทยาลัย)","title":"เตรียมตัวก่อนเรียน","items":["ทักษะที่ควรฝึกก่อนเข้าเรียน","หนังสือหรือคอร์สที่ควรศึกษาล่วงหน้า","กิจกรรมที่จะช่วยให้ปรับตัวได้ดี"]}],"tip":"คำแนะนำพิเศษเฉพาะบุคคลจาก RIASEC Code ของนักเรียน"}`;
 
     setLoading(true);
-    try{
-      const call=async(msgs)=>{
-        const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:msgs,max_tokens:2500,temperature:0.3})});
-        const j=await r.json();
-        if(!r.ok)throw new Error(j.error?.message||'Error '+r.status);
-        return j.choices[0].message.content;
-      };
-      let txt=await call([{role:'user',content:prompt}]);
-      const clean=t=>{t=t.replace(/```json/g,'').replace(/```/g,'').trim();const s=t.indexOf('{'),e=t.lastIndexOf('}');if(s>-1&&e>-1)t=t.substring(s,e+1);return t.replace(/[\r\n\t]/g,' ').replace(/[\x00-\x1F\x7F]/g,' ').replace(/,\s*}/g,'}').replace(/,\s*]/g,']');};
-      txt=clean(txt);
-      let result;
-      try{result=JSON.parse(txt);}
-      catch(e1){
-        txt=await call([{role:'user',content:prompt},{role:'assistant',content:txt},{role:'user',content:'JSON มี syntax error กรุณาตอบ JSON ที่ถูกต้องใหม่ ห้ามมี newline ใน string ห้ามมีข้อความนอก JSON'}]);
-        result=JSON.parse(clean(txt));
-      }
-      try{fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:data.name,classroom:data.room,studentNo:data.num,subjects:subj.join(', '),activities:act.join(', '),gpa,grade:data.grade,plan:data.plan,dream:data.dream,riasec:riasecCode,faculty1:result.faculties[0]?.name||'',faculty2:result.faculties[1]?.name||'',faculty3:result.faculties[2]?.name||''})});}catch(e){}
-      onDone(result);
-    }catch(err){alert('เกิดข้อผิดพลาด: '+err.message);}
-    finally{setLoading(false);}
-  };
+    var B='`';
+    function clean(t){
+      t=t.split(B+B+B+'json').join('').split(B+B+B).join('').trim();
+      var s=t.indexOf('{'),e=t.lastIndexOf('}');
+      if(s>-1&&e>-1)t=t.substring(s,e+1);
+      var out='';for(var i=0;i<t.length;i++){var c=t.charCodeAt(i);if(c===10||c===13||c===9){out+=' ';}else if(c>=32&&c!==127){out+=t[i];}}
+      return out.replace(/,[ ]*}/g,'}').replace(/,[ ]*]/g,']');
+    }
+    function api(msgs){
+      return fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GK},
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:msgs,max_tokens:2500,temperature:0.3})
+      }).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error?j.error.message:'Error '+r.status);return j.choices[0].message.content;});});
+    }
+    api([{role:'user',content:prompt}])
+    .then(function(txt){
+      var r;try{r=JSON.parse(clean(txt));}
+      catch(e){return api([{role:'user',content:prompt},{role:'assistant',content:txt},{role:'user',content:'JSON มี syntax error ตอบ JSON ใหม่ ห้ามมี newline ใน string'}]).then(function(t2){return JSON.parse(clean(t2));});}
+      return r;
+    })
+    .then(function(result){
+      try{fetch(SH,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:d.name,classroom:d.room,studentNo:d.num,subjects:subj.join(', '),activities:act.join(', '),gpa:gpa,grade:d.grade,plan:d.plan,dream:d.dream,riasec:riasecCode,faculty1:result.faculties[0]?result.faculties[0].name:'',faculty2:result.faculties[1]?result.faculties[1].name:'',faculty3:result.faculties[2]?result.faculties[2].name:''})});}catch(e){}
+      result._ri=d.ri;onDone(result);
+    })
+    .catch(function(err){alert('เกิดข้อผิดพลาด: '+err.message);})
+    .finally(function(){setLoading(false);});
+  }
+
+  var EM=['😐','🙂','😊','😄','🔥'];
 
   return(
-    <div style={{background:C.bg,minHeight:'100vh'}}>
+    <div style={{background:'var(--bg)',minHeight:'100vh'}}>
       {loading&&<Loading/>}
-      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 15% 20%,rgba(76,29,149,.3) 0%,transparent 55%)',pointerEvents:'none'}}/>
-      <nav style={{position:'relative',zIndex:10,display:'flex',alignItems:'center',gap:10,padding:'14px 20px',borderBottom:`1px solid ${C.goldf}.15)`,background:'rgba(15,13,26,.8)'}}>
-        <span style={{fontSize:16,fontWeight:800,color:C.gold,cursor:'pointer'}} onClick={onHome}>KUS Compass</span>
-        <span style={{color:`${C.goldf}.3)`}}>/</span>
-        <span style={{color:`${C.goldf}.5)`,fontSize:13}}>กรอกข้อมูล</span>
-      </nav>
-      <Progress step={step} total={5}/>
-      <div style={wrap}>
-        <div style={{paddingTop:20,animation:'fadeUp .35s ease'}}>
+      <Bg/>
+      <div style={{paddingTop:52}}>
+        <Prog step={step} total={5}/>
+        <div style={wrap}>
+          <div style={{paddingTop:24,animation:'fu .3s ease'}}>
 
-          {step===1&&(
-            <div>
-              <p style={tag}>ขั้นที่ 1 — ข้อมูลส่วนตัว</p>
-              <h2 style={h2}>เริ่มต้นด้วยการรู้จักคุณ</h2>
-              <p style={sub}>กรอกข้อมูลพื้นฐานเพื่อปรับผลลัพธ์ให้เหมาะกับคุณ</p>
-              <div style={field}><label style={lbl}>ชื่อ-นามสกุล</label><input style={inp} value={data.name} onChange={e=>update({name:e.target.value})} placeholder="เช่น นายสมชาย ใจดี"/></div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
-                <div><label style={lbl}>ห้องเรียน</label><input style={inp} value={data.room} onChange={e=>update({room:e.target.value})} placeholder="เช่น ม.6/2"/></div>
-                <div><label style={lbl}>เลขที่</label><input style={inp} value={data.num} onChange={e=>update({num:e.target.value})} placeholder="เช่น 15"/></div>
+            {/* Step 1 */}
+            {step===1&&(
+              <div>
+                <span className="eye">ขั้นที่ 1 — ข้อมูลส่วนตัว</span>
+                <h2 style={h2}>เริ่มต้นด้วยการรู้จักคุณ</h2>
+                <p style={sub}>กรอกข้อมูลพื้นฐานเพื่อปรับผลลัพธ์ให้เหมาะกับคุณ</p>
+                <div style={fd}><label className="lbl">ชื่อ-นามสกุล</label><input className="inp" value={d.name} onChange={function(e){upd({name:e.target.value});}} placeholder="เช่น นายสมชาย ใจดี"/></div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,...fd}} className="two">
+                  <div><label className="lbl">ห้องเรียน</label><input className="inp" value={d.room} onChange={function(e){upd({room:e.target.value});}} placeholder="เช่น ม.6/2"/></div>
+                  <div><label className="lbl">เลขที่</label><input className="inp" value={d.num} onChange={function(e){upd({num:e.target.value});}} placeholder="เช่น 15"/></div>
+                </div>
+                <div style={fd}><label className="lbl">ชั้นเรียน</label>
+                  <select className="sel" value={d.grade} onChange={function(e){upd({grade:e.target.value});}}>
+                    <option value="">— เลือก —</option>
+                    {['ม.4','ม.5','ม.6','จบ ม.6 แล้ว'].map(function(g){return <option key={g}>{g}</option>;})}
+                  </select>
+                </div>
+                <div style={fd}><label className="lbl">แผนการเรียน</label>
+                  <select className="sel" value={d.plan} onChange={function(e){upd({plan:e.target.value});}}>
+                    <option value="">— เลือก —</option>
+                    {['วิทย์-คณิต','ศิลป์-คำนวณ','ศิลป์-ภาษา','ศิลป์-สังคม','อื่นๆ'].map(function(p){return <option key={p}>{p}</option>;})}
+                  </select>
+                </div>
+                <div style={fd}>
+                  <label className="lbl">เกรดเฉลี่ย (GPA)</label>
+                  <div style={{textAlign:'center',fontSize:52,fontWeight:800,color:'var(--g)',fontFamily:'Sarabun,sans-serif',marginBottom:8,textShadow:'0 0 24px rgba(212,175,80,.25)'}}>{parseFloat(d.gpa).toFixed(2)}</div>
+                  <input type="range" min={1} max={4} step={0.05} value={d.gpa} onChange={function(e){upd({gpa:e.target.value});}}/>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--t4)',marginTop:4}}><span>1.00</span><span>2.00</span><span>3.00</span><span>4.00</span></div>
+                </div>
+                <button className="btn btn-p" onClick={function(){go(2);}} style={{width:'100%'}}>ถัดไป →</button>
               </div>
-              <div style={field}><label style={lbl}>ชั้นเรียน</label>
-                <select style={sel} value={data.grade} onChange={e=>update({grade:e.target.value})}>
-                  <option value="">— เลือก —</option>
-                  {['ม.4','ม.5','ม.6','จบ ม.6 แล้ว'].map(g=><option key={g}>{g}</option>)}
-                </select>
-              </div>
-              <div style={field}><label style={lbl}>แผนการเรียน</label>
-                <select style={sel} value={data.plan} onChange={e=>update({plan:e.target.value})}>
-                  <option value="">— เลือก —</option>
-                  {['วิทย์-คณิต','ศิลป์-คำนวณ','ศิลป์-ภาษา','ศิลป์-สังคม','อื่นๆ'].map(p=><option key={p}>{p}</option>)}
-                </select>
-              </div>
-              <div style={field}><label style={lbl}>เกรดเฉลี่ย (GPA)</label>
-                <div style={{textAlign:'center',fontSize:48,fontWeight:800,color:C.gold,marginBottom:8}}>{parseFloat(data.gpa).toFixed(2)}</div>
-                <input type="range" min={1} max={4} step={0.05} value={data.gpa} onChange={e=>update({gpa:e.target.value})} style={{width:'100%',accentColor:C.gold,cursor:'pointer'}}/>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'rgba(255,255,255,.3)',marginTop:4}}><span>1.00</span><span>2.00</span><span>3.00</span><span>4.00</span></div>
-              </div>
-              <button style={btnP} onClick={()=>{if(!data.grade){alert('กรุณาเลือกชั้นเรียน');return;}setStep(2);}}>ถัดไป →</button>
-            </div>
-          )}
+            )}
 
-          {step===2&&(
-            <div>
-              <p style={tag}>ขั้นที่ 2 — วิชาและกิจกรรม</p>
-              <h2 style={h2}>คุณชอบอะไร?</h2>
-              <p style={sub}>แตะเลือกวิชาและกิจกรรมที่ตรงกับตัวเอง</p>
-              <div style={field}><label style={lbl}>วิชาที่ชอบ</label>
-                <div style={chips}>{SUBJECTS.map(s=><Chip key={s} label={s} selected={data.subjects.has(s)} onToggle={()=>toggleSet('subjects',s)}/>)}</div>
-                <input style={inp} value={data.subjOther} onChange={e=>update({subjOther:e.target.value})} placeholder="วิชาอื่นๆ (ถ้ามี)..."/>
+            {/* Step 2 */}
+            {step===2&&(
+              <div>
+                <span className="eye">ขั้นที่ 2 — วิชาและกิจกรรม</span>
+                <h2 style={h2}>คุณชอบอะไร?</h2>
+                <p style={sub}>แตะเลือกได้หลายอย่าง ยิ่งตรงความจริง ผลยิ่งแม่น</p>
+                <div style={fd}><label className="lbl">วิชาที่ชอบ</label>
+                  <div style={cg}>{SUBJ.map(function(s){return <Chip key={s} label={s} on={d.subj.has(s)} toggle={function(){tog('subj',s);}}/>;})}</div>
+                  <input className="inp" value={d.sO} onChange={function(e){upd({sO:e.target.value});}} placeholder="วิชาอื่นๆ (ถ้ามี)..."/>
+                </div>
+                <div style={fd}><label className="lbl">กิจกรรมที่ชอบ</label>
+                  <div style={cg}>{ACTS.map(function(a){return <Chip key={a} label={a} on={d.act.has(a)} toggle={function(){tog('act',a);}}/>;})}</div>
+                  <input className="inp" style={{marginTop:6}} value={d.aO} onChange={function(e){upd({aO:e.target.value});}} placeholder="กิจกรรมอื่นๆ (ถ้ามี)..."/>
+                </div>
+                <div style={row}><button className="btn btn-o" onClick={function(){go(1);}}>← กลับ</button><button className="btn btn-p" onClick={function(){go(3);}} style={{flex:1}}>ถัดไป →</button></div>
               </div>
-              <div style={field}><label style={lbl}>กิจกรรมที่ชอบ</label>
-                <div style={chips}>{ACTIVITIES.map(a=><Chip key={a} label={a} selected={data.activities.has(a)} onToggle={()=>toggleSet('activities',a)}/>)}</div>
-                <input style={{...inp,marginTop:8}} value={data.actOther} onChange={e=>update({actOther:e.target.value})} placeholder="กิจกรรมอื่นๆ (ถ้ามี)..."/>
-              </div>
-              <div style={row}><button style={btnS} onClick={()=>setStep(1)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={()=>{if(data.subjects.size===0){alert('กรุณาเลือกวิชาที่ชอบอย่างน้อย 1 วิชา');return;}setStep(3);}}>ถัดไป →</button></div>
-            </div>
-          )}
+            )}
 
-          {step===3&&(
-            <div>
-              <p style={tag}>ขั้นที่ 3 — Holland RIASEC (ชุดที่ 1)</p>
-              <h2 style={h2}>คุณเป็นคนแบบไหน?</h2>
-              <p style={sub}>ทฤษฎี Holland แบ่งบุคลิกภาพ 6 ด้าน ซึ่งสัมพันธ์กับอาชีพและคณะที่เหมาะสม ตอบตามความจริงของตัวเอง</p>
-              <div style={{padding:'12px 16px',borderRadius:10,background:'rgba(212,175,80,.08)',border:`1px solid ${C.goldf}.2)`,marginBottom:20}}>
-                <p style={{fontSize:12,color:C.gold,fontWeight:600,marginBottom:4}}>🎯 Holland RIASEC Theory</p>
-                <p style={{fontSize:12,color:'rgba(255,255,255,.5)',lineHeight:1.6}}>John Holland (1959) พบว่าบุคลิกภาพ 6 ประเภท ได้แก่ R-I-A-S-E-C สัมพันธ์กับสภาพแวดล้อมการทำงานและอาชีพ ใช้เป็นมาตรฐานในการแนะแนวอาชีพทั่วโลก</p>
-              </div>
-              {RIASEC_Q.slice(0,6).map(q=><RiasecSlider key={q.id} q={q} value={data.riasec[q.id]||0} onChange={(id,v)=>update({riasec:{...data.riasec,[id]:v}})}/>)}
-              <div style={row}><button style={btnS} onClick={()=>setStep(2)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={()=>setStep(4)}>ถัดไป →</button></div>
-            </div>
-          )}
-
-          {step===4&&(
-            <div>
-              <p style={tag}>ขั้นที่ 4 — Holland RIASEC (ชุดที่ 2)</p>
-              <h2 style={h2}>ต่ออีกนิดนะ!</h2>
-              <p style={sub}>คำถามชุดสุดท้ายเพื่อให้ผลลัพธ์แม่นยำที่สุด</p>
-              {RIASEC_Q.slice(6).map(q=><RiasecSlider key={q.id} q={q} value={data.riasec[q.id]||0} onChange={(id,v)=>update({riasec:{...data.riasec,[id]:v}})}/>)}
-              <div style={field}><label style={lbl}>ความฝัน / อยากทำอะไรในอนาคต</label>
-                <textarea style={ta} value={data.dream} onChange={e=>update({dream:e.target.value})} placeholder="เช่น อยากสร้างแอป อยากเป็นหมอ อยากออกแบบ..."/>
-              </div>
-              <div style={row}><button style={btnS} onClick={()=>setStep(3)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={()=>setStep(5)}>ถัดไป →</button></div>
-            </div>
-          )}
-
-          {step===5&&(
-            <div>
-              <p style={tag}>ขั้นที่ 5 — ยืนยันข้อมูล</p>
-              <h2 style={h2}>พร้อมวิเคราะห์แล้ว!</h2>
-              <p style={sub}>ตรวจสอบข้อมูลก่อนส่งให้ AI วิเคราะห์</p>
-              {(()=>{
-                const subj=[...data.subjects,data.subjOther].filter(Boolean);
-                const act=[...data.activities,data.actOther].filter(Boolean);
-                const rc=computeRiasec(data.riasec);
-                const rows=[['ชื่อ',data.name||'-'],['ห้อง/เลขที่',`${data.room||'-'} เลขที่ ${data.num||'-'}`],['GPA',parseFloat(data.gpa).toFixed(2)],['ชั้นเรียน',`${data.grade} (${data.plan})`],['วิชาที่ชอบ',subj.join(', ')||'-'],['กิจกรรม',act.join(', ')||'-'],['Holland Code',rc||'-'],['ความฝัน',data.dream||'-']];
-                return(
-                  <div>
-                    <div style={{background:'rgba(76,29,149,.12)',border:`1px solid ${C.goldf}.15)`,borderRadius:14,padding:'18px 20px',marginBottom:16}}>
-                      {rows.map(([k,v])=>(
-                        <div key={k} style={{display:'flex',gap:10,marginBottom:8,alignItems:'flex-start'}}>
-                          <span style={{fontSize:11,color:`${C.goldf}.5)`,letterSpacing:1,textTransform:'uppercase',minWidth:90,paddingTop:2}}>{k}</span>
-                          <span style={{fontSize:13,color:'#e2e8f0',lineHeight:1.55,flex:1}}>{v}</span>
-                        </div>
-                      ))}
+            {/* Step 3 */}
+            {step===3&&(
+              <div>
+                <span className="eye">ขั้นที่ 3 — Holland RIASEC (R, I, A)</span>
+                <h2 style={h2}>ลองตอบตรงๆ นะ 😊</h2>
+                <p style={sub}>ไม่มีผิดถูก ตอบตามที่รู้สึกจริงๆ เลย</p>
+                <div className="gc-gold" style={{padding:'12px 16px',marginBottom:18}}>
+                  <p style={{fontSize:11,color:'rgba(212,175,80,.85)',fontWeight:600,marginBottom:3}}>🎯 Holland RIASEC Theory (Holland, 1959)</p>
+                  <p style={{fontSize:11,color:'var(--t3)',lineHeight:1.6}}>ทฤษฎีมาตรฐานสากลที่วัดบุคลิกภาพ 6 ด้านเพื่อจับคู่กับคณะที่เหมาะสมที่สุด</p>
+                </div>
+                {RQ.slice(0,9).map(function(q){
+                  var val=d.ri[q.id]||0;
+                  return(
+                    <div key={q.id} className={'qc'+(val>0?' a':'')}>
+                      <p className="qc-q">{q.q}</p>
+                      <div className="qc-scale">
+                        {EM.map(function(em,i){return(
+                          <div key={i} className="qc-opt" onClick={function(){var o={};o[q.id]=i;upd({ri:Object.assign({},d.ri,o)});}}>
+                            <div className={'qc-btn'+(val===i?' s':'')}>{val===i?em:''}</div>
+                            <span className="qc-lbl">{['ไม่เลย','น้อย','ปานกลาง','มาก','มากที่สุด'][i]}</span>
+                          </div>
+                        );})}
+                      </div>
                     </div>
-                    <div style={{padding:'14px 16px',borderRadius:10,background:'rgba(212,175,80,.06)',border:`1px solid ${C.goldf}.15)`,marginBottom:20}}>
-                      <p style={{fontSize:12,color:C.gold,margin:0}}>🧠 AI จะวิเคราะห์โดยอ้างอิง <strong>Holland RIASEC Theory</strong> และแนะนำคณะที่เหมาะสมกับบุคลิกภาพของคุณ</p>
+                  );
+                })}
+                <div style={row}><button className="btn btn-o" onClick={function(){go(2);}}>← กลับ</button><button className="btn btn-p" onClick={function(){go(4);}} style={{flex:1}}>ถัดไป →</button></div>
+              </div>
+            )}
+
+            {/* Step 4 */}
+            {step===4&&(
+              <div>
+                <span className="eye">ขั้นที่ 4 — Holland RIASEC (S, E, C)</span>
+                <h2 style={h2}>เกือบแล้ว! 💪</h2>
+                <p style={sub}>อีกนิดเดียว แล้วจะได้รู้ว่าคุณเหมาะกับอะไร</p>
+                {RQ.slice(9).map(function(q){
+                  var val=d.ri[q.id]||0;
+                  return(
+                    <div key={q.id} className={'qc'+(val>0?' a':'')}>
+                      <p className="qc-q">{q.q}</p>
+                      <div className="qc-scale">
+                        {EM.map(function(em,i){return(
+                          <div key={i} className="qc-opt" onClick={function(){var o={};o[q.id]=i;upd({ri:Object.assign({},d.ri,o)});}}>
+                            <div className={'qc-btn'+(val===i?' s':'')}>{val===i?em:''}</div>
+                            <span className="qc-lbl">{['ไม่เลย','น้อย','ปานกลาง','มาก','มากที่สุด'][i]}</span>
+                          </div>
+                        );})}
+                      </div>
                     </div>
-                  </div>
-                );
-              })()}
-              <div style={row}><button style={btnS} onClick={()=>setStep(4)}>← กลับ</button><button style={{...btnP,flex:1}} onClick={submit}>🚀 วิเคราะห์เลย!</button></div>
-            </div>
-          )}
+                  );
+                })}
+                <div style={{...fd,marginTop:16}}><label className="lbl">ความฝัน / อยากทำอะไรในอนาคต?</label>
+                  <textarea className="ta" value={d.dream} onChange={function(e){upd({dream:e.target.value});}} placeholder="เล่าให้ฟังได้เลย เช่น อยากสร้างแอป อยากเป็นหมอ อยากออกแบบ..."/>
+                </div>
+                <div style={row}><button className="btn btn-o" onClick={function(){go(3);}}>← กลับ</button><button className="btn btn-p" onClick={function(){go(5);}} style={{flex:1}}>ถัดไป →</button></div>
+              </div>
+            )}
+
+            {/* Step 5 */}
+            {step===5&&(
+              <div>
+                <span className="eye">ขั้นที่ 5 — ยืนยันข้อมูล</span>
+                <h2 style={h2}>พร้อมแล้ว! 🚀</h2>
+                <p style={sub}>ตรวจสอบข้อมูลก่อนส่งให้ AI วิเคราะห์</p>
+                {(function(){
+                  var subj=Array.from(d.subj);if(d.sO)subj.push(d.sO);
+                  var act=Array.from(d.act);if(d.aO)act.push(d.aO);
+                  var rc=calcR(d.ri).slice(0,3).map(function(e){return e[0];}).join('');
+                  var rows=[['ชื่อ',d.name||'-'],['ห้อง/เลขที่',(d.room||'-')+' เลขที่ '+(d.num||'-')],['GPA',parseFloat(d.gpa).toFixed(2)],['ชั้นเรียน',d.grade+' ('+d.plan+')'],['วิชา',subj.join(', ')||'-'],['กิจกรรม',act.join(', ')||'-'],['Holland Code',rc||'-'],['ความฝัน',d.dream||'-']];
+                  return(
+                    <div>
+                      <div className="gc" style={{padding:'18px 20px',marginBottom:12}}>
+                        {rows.map(function(r){return(<div key={r[0]} className="sr-row"><span className="sr-k">{r[0]}</span><span className="sr-v">{r[1]}</span></div>);})}
+                      </div>
+                      <div className="gc-gold" style={{padding:'12px 16px',marginBottom:18}}>
+                        <p style={{fontSize:12,color:'rgba(212,175,80,.85)',margin:0}}>🧠 AI จะวิเคราะห์โดยอ้างอิง Holland RIASEC Theory แนะนำคณะที่เหมาะกับ <strong style={{color:'var(--g)'}}>{rc}</strong></p>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={row}>
+                  <button className="btn btn-o" onClick={function(){go(4);}}>← กลับ</button>
+                  <button className="btn btn-p" onClick={submit} style={{flex:1,animation:'glow 2s ease infinite'}}>🚀 วิเคราะห์เลย!</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── RESULT ─── */
-function ResultPage({result,onRedo,onHome}){
-  const [open,setOpen]=useState(0);
-  const facs=result.faculties||[];
-  const road=result.roadmap||[];
-  const rankBg=['linear-gradient(135deg,#d97706,#f59e0b)','linear-gradient(135deg,#6b7280,#9ca3af)','linear-gradient(135deg,#92400e,#b45309)'];
-  const rankTxt=['#1c1917','#fff','#fff'];
-  const wrap={position:'relative',zIndex:1,maxWidth:820,margin:'0 auto',padding:'28px 20px 80px'};
-
+/* ── RESULT ── */
+function Result({result,onRedo,onHome}){
+  var [open,setOpen]=useState(0);
+  var facs=result.faculties||[],road=result.roadmap||[],sc=result._ri||{};
+  var rBg=['linear-gradient(135deg,#d97706,#f59e0b)','linear-gradient(135deg,#52525b,#71717a)','linear-gradient(135deg,#92400e,#b45309)'];
+  var rTc=['#1c1917','#fff','#fff'];
   return(
-    <div style={{background:C.bg,minHeight:'100vh'}}>
-      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 10% 20%,rgba(76,29,149,.35) 0%,transparent 55%),radial-gradient(ellipse at 90% 80%,rgba(109,40,217,.15) 0%,transparent 55%)',pointerEvents:'none'}}/>
-      <nav style={{position:'relative',zIndex:10,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:`1px solid ${C.goldf}.15)`,background:'rgba(15,13,26,.8)'}}>
-        <span style={{fontSize:16,fontWeight:800,color:C.gold,cursor:'pointer'}} onClick={onHome}>KUS Compass</span>
-        <button onClick={onRedo} style={{padding:'8px 16px',fontSize:13,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:`1.5px solid ${C.goldf}.2)`,borderRadius:8,background:'transparent',color:`${C.goldf}.7)`,cursor:'pointer'}}>ทำแบบประเมินใหม่</button>
-      </nav>
+    <div style={{background:'var(--bg)',minHeight:'100vh'}}>
+      <Bg/>
+      <div style={{position:'relative',zIndex:1,maxWidth:820,margin:'0 auto',padding:'72px 20px 80px'}}>
 
-      <div style={wrap}>
-        {/* HERO */}
-        <div style={{textAlign:'center',paddingBottom:48,animation:'fadeUp .5s ease'}}>
-          <p style={{fontSize:11,letterSpacing:3,textTransform:'uppercase',color:C.gold,marginBottom:14}}>ผลการวิเคราะห์ Holland RIASEC + AI</p>
+        {/* Hero */}
+        <div style={{textAlign:'center',paddingBottom:48,animation:'fu .5s ease'}}>
+          <span className="eye" style={{display:'block',textAlign:'center'}}>ผลการวิเคราะห์ Holland RIASEC + AI</span>
           {result.riasecCode&&(
-            <div style={{display:'inline-flex',alignItems:'center',gap:10,padding:'10px 20px',borderRadius:12,background:'rgba(76,29,149,.2)',border:`1px solid ${C.goldf}.25)`,marginBottom:20}}>
-              <span style={{fontSize:22,fontWeight:900,color:C.gold,letterSpacing:4}}>{result.riasecCode}</span>
+            <div style={{display:'inline-flex',alignItems:'center',gap:14,padding:'12px 22px',borderRadius:14,border:'0.5px solid rgba(212,175,80,.18)',background:'rgba(212,175,80,.04)',margin:'8px 0 20px'}}>
+              <div>
+                <div style={{fontSize:9,color:'rgba(212,175,80,.4)',letterSpacing:3,textTransform:'uppercase',marginBottom:2}}>Holland Code</div>
+                <div style={{fontSize:28,fontWeight:900,color:'var(--g)',letterSpacing:7,fontFamily:'Sarabun,sans-serif',textShadow:'0 0 16px rgba(212,175,80,.25)'}}>{result.riasecCode}</div>
+              </div>
+              <div style={{width:1,height:30,background:'rgba(212,175,80,.15)'}}/>
               <div style={{textAlign:'left'}}>
-                <div style={{fontSize:11,color:`${C.goldf}.5)`,letterSpacing:1,textTransform:'uppercase'}}>Holland Code</div>
-                <div style={{fontSize:12,color:'rgba(255,255,255,.6)'}}>{result.riasecDesc}</div>
+                {result.riasecCode.split('').map(function(c,i){return(
+                  <div key={i} style={{fontSize:11,color:'var(--t3)'}}><span style={{color:RC[c]||'#fff',fontWeight:600}}>{c}</span> = {RL[c]}</div>
+                );})}
               </div>
             </div>
           )}
-          <h1 style={{fontSize:'clamp(22px,5vw,40px)',fontWeight:900,color:'#f1f5f9',lineHeight:1.2,marginBottom:18}}>
+          <h1 style={{fontSize:'clamp(20px,5vw,36px)',fontWeight:800,color:'var(--t1)',lineHeight:1.2,marginBottom:20}}>
             คณะที่ใช่ของคุณคือ<br/>
-            <span style={{background:`linear-gradient(135deg,${C.gold},#f0d060)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
-              {facs[0]?.name||'คณะที่เหมาะกับคุณ'}
+            <span style={{background:'linear-gradient(135deg,var(--g),var(--g2))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>
+              {facs[0]?facs[0].name:'คณะที่เหมาะกับคุณ'}
             </span>
           </h1>
-          <div style={{maxWidth:640,margin:'0 auto',padding:'18px 22px',background:'rgba(76,29,149,.12)',border:`1px solid ${C.goldf}.2)`,borderRadius:14,fontSize:15,color:'rgba(255,255,255,.65)',lineHeight:1.8,textAlign:'left'}}>
+          <div className="gc" style={{maxWidth:600,margin:'0 auto',padding:'16px 20px',fontSize:14,color:'var(--t3)',lineHeight:1.85,textAlign:'left'}}>
             {result.summary}
           </div>
         </div>
 
-        {/* FACULTIES */}
+        {/* RIASEC Chart */}
+        {Object.keys(sc).length>0&&<RChart sc={sc}/>}
+
+        {/* Faculties */}
         <div style={{marginBottom:48}}>
-          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.goldf}.1)`}}>
-            <div style={{width:36,height:36,borderRadius:10,background:'rgba(76,29,149,.5)',border:`1px solid ${C.goldf}.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🎓</div>
-            <h2 style={{fontSize:20,fontWeight:800,color:'#f1f5f9',margin:0}}>คณะที่แนะนำตาม Holland Code</h2>
-          </div>
-          {facs.map((f,i)=>(
-            <div key={i} style={{background:'rgba(76,29,149,.1)',border:`1.5px solid ${i===0?C.goldf+',.35)':'rgba(212,175,80,.12)'}`,borderRadius:16,overflow:'hidden',marginBottom:14,transition:'border-color .2s'}}>
-              <div style={{display:'flex',alignItems:'center',gap:14,padding:'18px 20px',cursor:'pointer'}} onClick={()=>setOpen(open===i?-1:i)}>
-                <div style={{width:38,height:38,borderRadius:10,background:rankBg[i]||'rgba(76,29,149,.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900,color:rankTxt[i]||'#fff',flexShrink:0}}>{i+1}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:16,fontWeight:800,color:'#f1f5f9',marginBottom:3}}>{f.name}</div>
-                  <div style={{fontSize:12,color:`${C.goldf}.5)`}}>{(f.careers||[]).join(' · ')}</div>
-                </div>
-                <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-                  <div style={{textAlign:'right'}}>
-                    <div style={{fontSize:24,fontWeight:900,background:`linear-gradient(135deg,${C.gold},#f0d060)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{f.match}%</div>
-                    <div style={{fontSize:10,color:`${C.goldf}.4)`,letterSpacing:1}}>MATCH</div>
-                  </div>
-                  <span style={{fontSize:18,color:`${C.goldf}.4)`,transform:open===i?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}>▾</span>
-                </div>
-              </div>
-              {open===i&&(
-                <div style={{padding:'0 20px 20px',borderTop:`1px solid ${C.goldf}.08)`}}>
-                  <p style={{color:'rgba(255,255,255,.55)',fontSize:14,lineHeight:1.75,padding:'14px 0 16px'}}>{f.reason}</p>
-                  <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:18}}>
-                    {(f.careers||[]).map(c=><span key={c} style={{padding:'4px 13px',fontSize:12,background:'rgba(76,29,149,.25)',border:`1px solid ${C.goldf}.2)`,borderRadius:999,color:C.gold}}>{c}</span>)}
-                  </div>
-                  <p style={{fontSize:11,letterSpacing:2,textTransform:'uppercase',color:`${C.goldf}.45)`,marginBottom:12}}>มหาวิทยาลัยที่เปิดสอน</p>
-                  {(f.universities||[]).map((u,j)=>(
-                    <div key={j} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'11px 13px',background:'rgba(76,29,149,.08)',border:`1px solid ${C.goldf}.08)`,borderRadius:10,marginBottom:8}}>
-                      <div style={{width:7,height:7,borderRadius:'50%',background:`linear-gradient(135deg,${C.purple},${C.gold})`,flexShrink:0,marginTop:5}}/>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:700,color:'#e2e8f0'}}>{u.name}</div>
-                        <div style={{fontSize:12,color:'rgba(255,255,255,.4)',marginTop:2}}>{u.program}</div>
-                        {u.note&&<div style={{fontSize:11,color:`${C.goldf}.4)`,marginTop:2}}>{u.note}</div>}
-                      </div>
+          <div className="sh"><div className="sh-ico">🎓</div><h2 className="sh-t">คณะที่แนะนำตาม Holland Code</h2></div>
+          {facs.map(function(f,i){
+            var isO=open===i;
+            return(
+              <div key={i} className={'fc'+(i===0?' top':'')} style={{marginBottom:12}}>
+                <div className="fc-head" onClick={function(){setOpen(isO?-1:i);}}>
+                  <div className="fc-rank" style={{background:rBg[i]||'rgba(124,58,237,.4)',color:rTc[i]||'#fff'}}>{i+1}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:15,fontWeight:700,color:'var(--t1)',marginBottom:6}}>{f.name}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:7}}>
+                      <div className="match-bar"><div className="match-fill" style={{width:(f.match||0)+'%'}}/></div>
+                      <span style={{fontSize:10,color:'rgba(212,175,80,.5)',flexShrink:0}}>{f.match}%</span>
                     </div>
-                  ))}
+                  </div>
+                  <div style={{textAlign:'right',flexShrink:0}}>
+                    {isO?<Counter target={f.match||0}/>:<span className="match-num">{f.match||0}%</span>}
+                    <div style={{fontSize:9,color:'rgba(212,175,80,.3)',letterSpacing:2,marginTop:1}}>MATCH</div>
+                  </div>
+                  <span style={{color:'var(--t4)',fontSize:12,transform:isO?'rotate(180deg)':'none',transition:'transform .2s',flexShrink:0,marginLeft:4}}>▾</span>
                 </div>
-              )}
-            </div>
-          ))}
+                {isO&&(
+                  <div className="fc-body" style={{animation:'fi .22s ease'}}>
+                    <p style={{fontSize:13,color:'var(--t3)',lineHeight:1.85,padding:'14px 0 16px'}}>{f.reason}</p>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:18}}>
+                      {(f.careers||[]).map(function(c){return <span key={c} className="ctag">💼 {c}</span>;})}
+                    </div>
+                    <p style={{fontSize:10,letterSpacing:2,textTransform:'uppercase',color:'rgba(212,175,80,.32)',marginBottom:10}}>มหาวิทยาลัยที่เปิดสอน</p>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:7}}>
+                      {(f.universities||[]).map(function(u,j){return(
+                        <div key={j} className="uc">
+                          <div style={{display:'flex',gap:9,alignItems:'flex-start'}}>
+                            <div style={{width:5,height:5,borderRadius:'50%',background:'linear-gradient(135deg,var(--pm),var(--g))',flexShrink:0,marginTop:5}}/>
+                            <div>
+                              <div style={{fontSize:12,fontWeight:600,color:'var(--t2)'}}>{u.name}</div>
+                              <div style={{fontSize:11,color:'var(--t3)',marginTop:2}}>{u.program}</div>
+                              {u.note&&<div style={{fontSize:10,color:'rgba(212,175,80,.32)',marginTop:2}}>{u.note}</div>}
+                            </div>
+                          </div>
+                        </div>
+                      );})}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* ROADMAP */}
+        {/* Roadmap */}
         <div style={{marginBottom:48}}>
-          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.goldf}.1)`}}>
-            <div style={{width:36,height:36,borderRadius:10,background:'rgba(76,29,149,.5)',border:`1px solid ${C.goldf}.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🗺️</div>
-            <h2 style={{fontSize:20,fontWeight:800,color:'#f1f5f9',margin:0}}>Roadmap การเตรียมตัว</h2>
-          </div>
-          {road.map((p,i)=>(
-            <div key={i} style={{display:'flex',gap:18,paddingBottom:i<road.length-1?22:0,borderBottom:i<road.length-1?`1px solid ${C.goldf}.08)`:'none',marginBottom:i<road.length-1?22:0}}>
-              <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0,width:18}}>
-                <div style={{width:18,height:18,borderRadius:'50%',background:`linear-gradient(135deg,${C.purple},${C.gold})`}}/>
-                {i<road.length-1&&<div style={{flex:1,width:2,background:`${C.goldf}.1)`,marginTop:6}}/>}
+          <div className="sh"><div className="sh-ico">🗺️</div><h2 className="sh-t">Roadmap การเตรียมตัว</h2></div>
+          {road.map(function(p,i){return(
+            <div key={i} style={{display:'flex',gap:14,paddingBottom:i<road.length-1?26:0,animation:'sr .4s '+(i*.1)+'s ease both'}}>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0,width:14}}>
+                <div className="tl-dot"/>
+                {i<road.length-1&&<div className="tl-line" style={{minHeight:66}}/>}
               </div>
               <div style={{flex:1}}>
-                <div style={{fontSize:11,letterSpacing:2,textTransform:'uppercase',color:C.gold,marginBottom:4}}>{p.phase}</div>
-                <div style={{fontSize:16,fontWeight:700,color:'#f1f5f9',marginBottom:10}}>{p.title}</div>
-                {(p.items||[]).map((it,j)=>(
-                  <div key={j} style={{display:'flex',gap:8,fontSize:13,color:'rgba(255,255,255,.5)',lineHeight:1.5,marginBottom:5}}>
-                    <span style={{color:`${C.goldf}.4)`,flexShrink:0}}>·</span>{it}
-                  </div>
-                ))}
+                <span style={{fontSize:10,letterSpacing:2,textTransform:'uppercase',color:'rgba(212,175,80,.55)',display:'block',marginBottom:3}}>{p.phase}</span>
+                <div style={{fontSize:15,fontWeight:600,color:'var(--t1)',marginBottom:9}}>{p.title}</div>
+                <div className="gc" style={{padding:'12px 14px'}}>
+                  {(p.items||[]).map(function(it,j){return(
+                    <div key={j} style={{display:'flex',gap:7,fontSize:13,color:'var(--t3)',lineHeight:1.65,marginBottom:j<p.items.length-1?6:0}}>
+                      <span style={{color:'rgba(212,175,80,.35)',flexShrink:0}}>›</span>{it}
+                    </div>
+                  );})}
+                </div>
               </div>
             </div>
-          ))}
+          );})}
         </div>
 
         {result.tip&&(
-          <div style={{display:'flex',gap:14,padding:'20px 22px',background:'rgba(76,29,149,.12)',border:`1px solid ${C.goldf}.2)`,borderRadius:14,marginBottom:48}}>
-            <span style={{fontSize:24,flexShrink:0}}>🌟</span>
-            <p style={{fontSize:14,color:C.gold,lineHeight:1.8,margin:0}}>{result.tip}</p>
+          <div style={{display:'flex',gap:12,padding:'18px 20px',borderRadius:14,border:'0.5px solid rgba(212,175,80,.14)',background:'rgba(212,175,80,.03)',marginBottom:44}}>
+            <span style={{fontSize:20,flexShrink:0}}>🌟</span>
+            <p style={{fontSize:13,color:'rgba(212,175,80,.75)',lineHeight:1.85,margin:0}}>{result.tip}</p>
           </div>
         )}
 
-        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-          <button style={{padding:'13px 32px',fontSize:15,fontWeight:700,fontFamily:'Sarabun,sans-serif',border:'none',borderRadius:12,background:`linear-gradient(135deg,${C.purple},${C.mid})`,color:'#fff',cursor:'pointer'}} onClick={()=>window.print()}>🖨️ พิมพ์ผลลัพธ์</button>
-          <button style={{padding:'13px 24px',fontSize:15,fontWeight:600,fontFamily:'Sarabun,sans-serif',border:`1.5px solid ${C.goldf}.2)`,borderRadius:12,background:'transparent',color:`${C.goldf}.7)`,cursor:'pointer'}} onClick={onRedo}>ทำแบบประเมินใหม่</button>
+        <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'}}>
+          <button className="btn btn-p" onClick={function(){window.print();}} style={{padding:'11px 24px',fontSize:14}}>🖨️ พิมพ์ผลลัพธ์</button>
+          <button className="btn btn-o" onClick={onRedo}>ทำแบบประเมินใหม่</button>
+          <button className="btn btn-o" onClick={onHome}>หน้าหลัก</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── APP ─── */
+/* ── APP ── */
 function App(){
-  const [screen,setScreen]=useState('home');
-  const [result,setResult]=useState(null);
+  var [screen,setScreen]=useState('home');
+  var [result,setResult]=useState(null);
+  var [step,setStep]=useState(1);
+  var [total,setTotal]=useState(5);
   return(
-    <>
-      {screen==='home'&&<Home onStart={()=>setScreen('form')}/>}
-      {screen==='form'&&<FormPage onDone={r=>{setResult(r);setScreen('result');}} onHome={()=>setScreen('home')}/>}
-      {screen==='result'&&<ResultPage result={result} onRedo={()=>setScreen('form')} onHome={()=>setScreen('home')}/>}
-    </>
+    <div>
+      <Nav
+        screen={screen}
+        step={step}
+        total={total}
+        onHome={function(){setScreen('home');}}
+        onRedo={function(){setScreen('form');setStep(1);}}
+      />
+      {screen==='home'&&<Home onStart={function(){setScreen('form');}}/>}
+      {screen==='form'&&<Form
+        onDone={function(r){setResult(r);setScreen('result');}}
+        onHome={function(){setScreen('home');}}
+        setStep={setStep}
+        setTotal={setTotal}
+      />}
+      {screen==='result'&&<Result
+        result={result}
+        onRedo={function(){setScreen('form');setStep(1);}}
+        onHome={function(){setScreen('home');}}
+      />}
+    </div>
   );
 }
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>
 </body>
 </html>
