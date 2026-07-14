@@ -17,7 +17,7 @@
   --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.10);--b3:rgba(255,255,255,.16);
   --t1:#f8fafc;--t2:#cbd5e1;--t3:#64748b;--t4:#334155;
   --p:#5b21b6;--pm:#7c3aed;--pl:#a78bfa;
-  --g:#d4af50;--g2:#f0d060;--ga:rgba(212,175,80,;
+  --g:#d4af50;--g2:#f0d060;
   --r1:6px;--r2:12px;--r3:18px;--r4:24px;
 }
 html{scroll-behavior:smooth;}
@@ -249,15 +249,18 @@ function Nav({screen,step,total,onHome,onRedo}){
 
       {screen==='form'&&(
         <div className="nav-steps hide-sm">
-          {steps.map(function(s,i){return(
-            <React.Fragment key={i}>
-              {i>0&&<span className="nav-sep">›</span>}
-              <div className={'nav-step'+(step>i+1?' done':step===i+1?' on':'')}>
-                <div className="nav-dot"/>
-                <span>{s}</span>
-              </div>
-            </React.Fragment>
-          );})}
+          {steps.map(function(s,i){
+            var cls='nav-step'+(step>i+1?' done':step===i+1?' on':'');
+            return(
+              <React.Fragment key={i}>
+                {i>0 ? <span className="nav-sep">›</span> : null}
+                <div className={cls}>
+                  <div className="nav-dot"/>
+                  <span>{s}</span>
+                </div>
+              </React.Fragment>
+            );
+          })}
         </div>
       )}
 
@@ -551,7 +554,7 @@ C (Conventional): บัญชี การเงิน สถิติ คณ�
                 <h2 style={h2}>เริ่มต้นด้วยการรู้จักคุณ</h2>
                 <p style={sub}>กรอกข้อมูลพื้นฐานเพื่อปรับผลลัพธ์ให้เหมาะกับคุณ</p>
                 <div style={fd}><label className="lbl">ชื่อ-นามสกุล</label><input className="inp" value={d.name} onChange={function(e){upd({name:e.target.value});}} placeholder="เช่น นายสมชาย ใจดี"/></div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,...fd}} className="two">
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}} className="two">
                   <div><label className="lbl">ห้องเรียน</label><input className="inp" value={d.room} onChange={function(e){upd({room:e.target.value});}} placeholder="เช่น ม.6/2"/></div>
                   <div><label className="lbl">เลขที่</label><input className="inp" value={d.num} onChange={function(e){upd({num:e.target.value});}} placeholder="เช่น 15"/></div>
                 </div>
@@ -647,7 +650,7 @@ C (Conventional): บัญชี การเงิน สถิติ คณ�
                     </div>
                   );
                 })}
-                <div style={{...fd,marginTop:16}}><label className="lbl">ความฝัน / อยากทำอะไรในอนาคต?</label>
+                <div style={{marginBottom:16,marginTop:16}}><label className="lbl">ความฝัน / อยากทำอะไรในอนาคต?</label>
                   <textarea className="ta" value={d.dream} onChange={function(e){upd({dream:e.target.value});}} placeholder="เล่าให้ฟังได้เลย เช่น อยากสร้างแอป อยากเป็นหมอ อยากออกแบบ..."/>
                 </div>
                 <div style={row}><button className="btn btn-o" onClick={function(){go(3);}}>← กลับ</button><button className="btn btn-p" onClick={function(){go(5);}} style={{flex:1}}>ถัดไป →</button></div>
