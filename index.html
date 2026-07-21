@@ -186,7 +186,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef} = React;
-const GK = 'YOUR_GROQ_KEY_HERE';
+const GK = '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';
 const SH = 'https://script.google.com/macros/s/AKfycbyBVdS7D6qMUKCacdljclXIksFgVHYKGkVRRG9xY8Te6yGA0bpAyIFJ8jZhFZTFaoD5/exec';
 
 /* ── Data (unchanged) ── */
@@ -519,7 +519,7 @@ C (Conventional): บัญชี, การเงินและการธน
 {"summary":"สรุปบุคลิกภาพ 2 ประโยค","riasecCode":"${riasecCode}","riasecDesc":"${riasecDesc}","faculties":[{"rank":1,"name":"ชื่อคณะ","match":90,"reason":"เหตุผล 1 ประโยค","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"}]},{"rank":2,"name":"ชื่อคณะ","match":80,"reason":"เหตุผล","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"}]},{"rank":3,"name":"ชื่อคณะ","match":70,"reason":"เหตุผล","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"}]}],"roadmap":[{"phase":"ม.ปลาย (ตอนนี้)","title":"สร้างพื้นฐาน","items":["วิชาที่ต้องเน้น","กิจกรรมที่ควรทำ","ทักษะที่ควรพัฒนา"]},{"phase":"ก่อน TCAS (ม.6)","title":"เตรียมสอบ","items":["วิชาสอบที่ต้องโฟกัส","เกณฑ์คะแนนที่ต้องการ","Portfolio ที่ควรสะสม"]},{"phase":"หลัง TCAS","title":"เตรียมเข้ามหาวิทยาลัย","items":["ทักษะที่ควรฝึกล่วงหน้า","คอร์สหรือหนังสือที่แนะนำ","สิ่งที่ควรทำในช่วงรอเปิดเทอม"]}],"tip":"คำแนะนำพิเศษเฉพาะบุคคล 1-2 ประโยค"}`;
 
     setLoading(true);
-    var B='`';
+    var B=String.fromCharCode(96);
 
     function clean(t){
       // strip markdown fences
@@ -536,12 +536,8 @@ C (Conventional): บัญชี, การเงินและการธน
       }
       // fix trailing commas
       out=out.replace(/,(\s*[}\]])/g,'$1');
-      // fix unescaped newlines inside strings (common Llama issue)
-      out=out.replace(/"([^"]*?)"/g,function(m,inner){
-        return '"'+inner.replace(/
-/g,' ').replace(/
-/g,'').replace(/	/g,' ')+'"';
-      });
+      // clean remaining whitespace
+      out=out.split('\\n').join(' ').split('\\r').join('').split('\\t').join(' ');
       return out;
     }
 
@@ -567,7 +563,8 @@ C (Conventional): บัญชี, การเงินและการธน
       try{return JSON.parse(clean(txt));}
       catch(e1){
         // try removing all newlines more aggressively
-        var t2=txt.replace(/[\r\n\t]+/g,' ').replace(/```json/g,'').replace(/```/g,'');
+        var B3=B+B+B;
+      var t2=txt.replace(/[\r\n\t]+/g,' ').split(B3+'json').join('').split(B3).join('');
         var s=t2.indexOf('{'),en=t2.lastIndexOf('}');
         if(s>-1&&en>-1)t2=t2.substring(s,en+1);
         t2=t2.replace(/,(\s*[}\]])/g,'$1');
