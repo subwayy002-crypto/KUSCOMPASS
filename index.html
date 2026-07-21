@@ -186,8 +186,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef} = React;
-const GK = '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';
-const SH = 'https://script.google.com/macros/s/AKfycbxkq4Sau0le3GdYCOh0NBncb1mKNTEMoGG87BLtiT0YiXyJVr6h3A7W406spGAIaHxU/exec';
+const GK = 'YOUR_GROQ_KEY_HERE';
+const SH = 'https://script.google.com/macros/s/AKfycbyBVdS7D6qMUKCacdljclXIksFgVHYKGkVRRG9xY8Te6yGA0bpAyIFJ8jZhFZTFaoD5/exec';
 
 /* ── Data (unchanged) ── */
 const RQ=[
@@ -494,43 +494,118 @@ function Form({onDone,onHome,setStep:setNavStep,setTotal}){
 - กิจกรรม: ${act.join(', ')}
 - ความฝัน: ${d.dream}
 
-คณะในมหาวิทยาลัยไทยที่ควรพิจารณาแยกตาม RIASEC:
-R (Realistic): วิศวกรรมศาสตร์ สถาปัตยกรรมศาสตร์ เกษตรศาสตร์ วนศาสตร์ เทคโนโลยีการเกษตร ประมง สัตวแพทยศาสตร์
-I (Investigative): แพทยศาสตร์ ทันตแพทยศาสตร์ เภสัชศาสตร์ วิทยาศาสตร์ วิทยาการคอมพิวเตอร์ เทคนิคการแพทย์ พยาธิวิทยาคลินิก กายภาพบำบัด วิทยาศาสตร์การกีฬา
-A (Artistic): นิเทศศาสตร์ วารสารศาสตร์ ศิลปกรรมศาสตร์ ดนตรี นาฏศิลป์ ภาพยนตร์ ออกแบบนิเทศศิลป์ สถาปัตยกรรมภายใน
-S (Social): ครุศาสตร์ ศึกษาศาสตร์ พยาบาลศาสตร์ สังคมสงเคราะห์ จิตวิทยา สาธารณสุขศาสตร์ รัฐประศาสนศาสตร์ พัฒนาสังคม
-E (Enterprising): บริหารธุรกิจ การตลาด นิติศาสตร์ รัฐศาสตร์ เศรษฐศาสตร์ การจัดการ การท่องเที่ยวและการโรงแรม
-C (Conventional): บัญชี การเงิน สถิติ คณิตศาสตร์ วิทยาศาสตร์ข้อมูล ระบบสารสนเทศ
+ฐานข้อมูลคณะและสาขาในไทย แบ่งตาม Holland RIASEC:
 
-เลือกคณะที่ตรงกับ RIASEC Code ของนักเรียน ห้ามแนะนำวิศวกรรมศาสตร์ถ้า Holland Code ไม่มี R หรือ I
+R (Realistic): วิศวกรรมโยธา, วิศวกรรมไฟฟ้า, วิศวกรรมเครื่องกล, วิศวกรรมเคมี, วิศวกรรมอุตสาหการ, วิศวกรรมสิ่งแวดล้อม, วิศวกรรมชีวการแพทย์, วิศวกรรมระบบราง, วิศวกรรมการบิน, สถาปัตยกรรมศาสตร์, ภูมิสถาปัตยกรรม, การออกแบบอุตสาหกรรม, เกษตรศาสตร์, พืชไร่นา, พืชสวน, ปฐพีวิทยา, กีฏวิทยา, วนศาสตร์, เทคโนโลยีการเกษตร, ประมงและทรัพยากรทางน้ำ, สัตวแพทยศาสตร์, เทคโนโลยีอุตสาหกรรม, ครุศาสตร์อุตสาหกรรม, เทคโนโลยีการก่อสร้าง, เทคโนโลยีเครื่องกล
 
-ตอบ JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี newline ใน string:
-{"summary":"สรุปบุคลิกภาพตาม Holland RIASEC 2-3 ประโยค","riasecCode":"${riasecCode}","riasecDesc":"${riasecDesc}","faculties":[{"rank":1,"name":"คณะที่เหมาะสม","match":90,"reason":"เหตุผลที่สอดคล้องกับ RIASEC Code","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขาจริง","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขาจริง","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขาจริง","note":"จุดเด่น"}]},{"rank":2,"name":"คณะที่สอง","match":80,"reason":"เหตุผล","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]},{"rank":3,"name":"คณะที่สาม","match":70,"reason":"เหตุผล","careers":["x","x","x"],"universities":[{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"},{"name":"x","program":"x","note":"x"}]}],"roadmap":[{"phase":"ม.ปลาย (ตอนนี้)","title":"สร้างพื้นฐานให้แข็งแกร่ง","items":["วิชาที่ต้องเน้นและเกรดที่ควรรักษา","กิจกรรมหรือทักษะที่ควรเริ่มพัฒนา","การอ่านหนังสือหรือ resource ที่แนะนำ"]},{"phase":"ก่อน TCAS (ม.6 เทอม 1-2)","title":"เตรียมสอบและสมัคร","items":["วิชาสอบที่ต้องโฟกัส เช่น TPAT TGAT A-Level","เกณฑ์คะแนนขั้นต่ำของคณะเป้าหมาย","Portfolio หรือกิจกรรมที่ควรสะสม"]},{"phase":"หลัง TCAS (ก่อนเข้ามหาวิทยาลัย)","title":"เตรียมตัวก่อนเรียน","items":["ทักษะที่ควรฝึกก่อนเข้าเรียน","หนังสือหรือคอร์สที่ควรศึกษาล่วงหน้า","กิจกรรมที่จะช่วยให้ปรับตัวได้ดี"]}],"tip":"คำแนะนำพิเศษเฉพาะบุคคลจาก RIASEC Code ของนักเรียน"}`;
+I (Investigative): แพทยศาสตร์, ทันตแพทยศาสตร์, เภสัชศาสตร์, เทคนิคการแพทย์, กายภาพบำบัด, กิจกรรมบำบัด, รังสีเทคนิค, พยาธิวิทยาคลินิก, โสตทัศนพิจิกศาสตร์, วิทยาศาสตร์การแพทย์, วิทยาศาสตร์ (คณิตศาสตร์), วิทยาศาสตร์ (ฟิสิกส์), วิทยาศาสตร์ (เคมี), วิทยาศาสตร์ (ชีววิทยา), จุลชีววิทยา, ชีวเคมี, สถิติ, วิทยาศาสตร์สิ่งแวดล้อม, วิทยาการคอมพิวเตอร์, วิทยาการข้อมูล, ปัญญาประดิษฐ์, เทคโนโลยีสารสนเทศ, วิศวกรรมคอมพิวเตอร์, วิทยาศาสตร์และเทคโนโลยีการอาหาร, เทคโนโลยีอาหาร, วิทยาศาสตร์การกีฬา, สาธารณสุขศาสตร์, อาชีวอนามัยและความปลอดภัย, วิทยาศาสตร์นิติเวช, เภสัชกรรมคลินิก, ชีวสารสนเทศ
+
+A (Artistic): นิเทศศาสตร์, การโฆษณา, การประชาสัมพันธ์, วารสารศาสตร์, ภาพยนตร์และภาพถ่าย, สื่อดิจิทัล, ศิลปกรรมศาสตร์, จิตรกรรม, ประติมากรรม, ภาพพิมพ์, ศิลปะไทย, ดนตรีคลาสสิก, ดนตรีไทย, ดนตรีสมัยนิยม, ดุริยางคศิลป์, นาฏศิลป์, การละครและการแสดง, ออกแบบนิเทศศิลป์, กราฟิกดีไซน์, ออกแบบแฟชั่น, ออกแบบตกแต่งภายใน, สถาปัตยกรรมภายใน, ดิจิทัลอาร์ต, แอนิเมชั่น, เกมและสื่อเชิงโต้ตอบ, การถ่ายภาพ, ศิลปศึกษา, ดนตรีศึกษา, ทัศนศิลป์
+
+S (Social): ครุศาสตร์, ศึกษาศาสตร์ (การสอนทุกวิชา), พยาบาลศาสตร์, จิตวิทยาคลินิก, จิตวิทยาชุมชน, จิตวิทยาการศึกษา, จิตวิทยาอุตสาหกรรม, สังคมสงเคราะห์ศาสตร์, สังคมวิทยา, มานุษยวิทยา, พัฒนาสังคม, สาธารณสุขชุมชน, แพทย์แผนไทย, แพทย์แผนจีน, การส่งเสริมสุขภาพ, ภาษาศาสตร์, อักษรศาสตร์, ภาษาไทย, ภาษาอังกฤษ, ภาษาจีน, ภาษาญี่ปุ่น, ภาษาเกาหลี, ภาษาฝรั่งเศส, ภาษาเยอรมัน, ภาษาสเปน, ปรัชญา, ประวัติศาสตร์, ภูมิศาสตร์, บรรณารักษศาสตร์, การแนะแนว, พัฒนาชุมชน
+
+E (Enterprising): บริหารธุรกิจ, การตลาด, การจัดการ, ธุรกิจระหว่างประเทศ, การเป็นผู้ประกอบการ, เศรษฐศาสตร์, เศรษฐศาสตร์ธุรกิจ, นิติศาสตร์, รัฐศาสตร์, การเมืองการปกครอง, ความสัมพันธ์ระหว่างประเทศ, รัฐประศาสนศาสตร์, การทูต, การท่องเที่ยว, การโรงแรม, การจัดการอีเวนต์, การจัดการโลจิสติกส์, การค้าระหว่างประเทศ, การจัดการธุรกิจดิจิทัล, การจัดการกีฬา, วิทยาลัยนานาชาติ, การจัดการทรัพยากรมนุษย์
+
+C (Conventional): บัญชี, การเงินและการธนาคาร, การเงิน, สถิติ, คณิตศาสตร์ประยุกต์, วิทยาศาสตร์ข้อมูล (Data Analytics), ระบบสารสนเทศทางธุรกิจ, วิศวกรรมการเงิน, การจัดการสำนักงาน, เลขานุการ, การประกันภัย, อสังหาริมทรัพย์, การจัดการคลังสินค้า, ระบบสารสนเทศเพื่อการจัดการ
+
+กฎสำคัญในการแนะนำ:
+1. ดู Holland Code เป็นหลัก เลือกคณะจากกลุ่มที่ตรงกับ Code 2-3 ตัวแรก
+2. ผสมผสานวิชาที่ชอบ กิจกรรม และความฝันประกอบ
+3. ห้ามแนะนำวิศวกรรมศาสตร์ถ้า Code ไม่มี R หรือ I
+4. ให้คณะที่หลากหลาย ไม่ซ้ำกลุ่มเดียว เช่น ถ้า Code คือ IAS ให้มีทั้งคณะจาก I, A, S
+5. ชื่อสาขาต้องเป็นชื่อจริงที่ใช้ในมหาวิทยาลัยไทย
+
+ตอบ JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี markdown ไม่มี newline ใน string values:
+{"summary":"สรุปบุคลิกภาพ 2 ประโยค","riasecCode":"${riasecCode}","riasecDesc":"${riasecDesc}","faculties":[{"rank":1,"name":"ชื่อคณะ","match":90,"reason":"เหตุผล 1 ประโยค","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"}]},{"rank":2,"name":"ชื่อคณะ","match":80,"reason":"เหตุผล","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"}]},{"rank":3,"name":"ชื่อคณะ","match":70,"reason":"เหตุผล","careers":["อาชีพ1","อาชีพ2","อาชีพ3"],"universities":[{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"},{"name":"มหาวิทยาลัย","program":"ชื่อสาขา","note":"จุดเด่น"}]}],"roadmap":[{"phase":"ม.ปลาย (ตอนนี้)","title":"สร้างพื้นฐาน","items":["วิชาที่ต้องเน้น","กิจกรรมที่ควรทำ","ทักษะที่ควรพัฒนา"]},{"phase":"ก่อน TCAS (ม.6)","title":"เตรียมสอบ","items":["วิชาสอบที่ต้องโฟกัส","เกณฑ์คะแนนที่ต้องการ","Portfolio ที่ควรสะสม"]},{"phase":"หลัง TCAS","title":"เตรียมเข้ามหาวิทยาลัย","items":["ทักษะที่ควรฝึกล่วงหน้า","คอร์สหรือหนังสือที่แนะนำ","สิ่งที่ควรทำในช่วงรอเปิดเทอม"]}],"tip":"คำแนะนำพิเศษเฉพาะบุคคล 1-2 ประโยค"}`;
 
     setLoading(true);
     var B='`';
+
     function clean(t){
+      // strip markdown fences
       t=t.split(B+B+B+'json').join('').split(B+B+B).join('').trim();
+      // extract first { ... }
       var s=t.indexOf('{'),e=t.lastIndexOf('}');
       if(s>-1&&e>-1)t=t.substring(s,e+1);
-      var out='';for(var i=0;i<t.length;i++){var c=t.charCodeAt(i);if(c===10||c===13||c===9){out+=' ';}else if(c>=32&&c!==127){out+=t[i];}}
-      return out.replace(/,[ ]*}/g,'}').replace(/,[ ]*]/g,']');
+      // replace all control chars with space
+      var out='';
+      for(var i=0;i<t.length;i++){
+        var code=t.charCodeAt(i);
+        if(code===10||code===13||code===9){out+=' ';}
+        else if(code>=32&&code!==127){out+=t[i];}
+      }
+      // fix trailing commas
+      out=out.replace(/,(\s*[}\]])/g,'$1');
+      // fix unescaped newlines inside strings (common Llama issue)
+      out=out.replace(/"([^"]*?)"/g,function(m,inner){
+        return '"'+inner.replace(/
+/g,' ').replace(/
+/g,'').replace(/	/g,' ')+'"';
+      });
+      return out;
     }
+
     function api(msgs){
       return fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GK},
-        body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:msgs,max_tokens:2500,temperature:0.3})
-      }).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error?j.error.message:'Error '+r.status);return j.choices[0].message.content;});});
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+GK},
+        body:JSON.stringify({
+          model:'llama-3.3-70b-versatile',
+          messages:msgs,
+          max_tokens:2500,
+          temperature:0.2
+        })
+      }).then(function(r){
+        return r.json().then(function(j){
+          if(!r.ok)throw new Error(j.error?j.error.message:'API Error '+r.status);
+          return j.choices[0].message.content;
+        });
+      });
     }
+
+    function tryParse(txt){
+      try{return JSON.parse(clean(txt));}
+      catch(e1){
+        // try removing all newlines more aggressively
+        var t2=txt.replace(/[\r\n\t]+/g,' ').replace(/```json/g,'').replace(/```/g,'');
+        var s=t2.indexOf('{'),en=t2.lastIndexOf('}');
+        if(s>-1&&en>-1)t2=t2.substring(s,en+1);
+        t2=t2.replace(/,(\s*[}\]])/g,'$1');
+        try{return JSON.parse(t2);}
+        catch(e2){return null;}
+      }
+    }
+
     api([{role:'user',content:prompt}])
     .then(function(txt){
-      var r;try{r=JSON.parse(clean(txt));}
-      catch(e){return api([{role:'user',content:prompt},{role:'assistant',content:txt},{role:'user',content:'JSON มี syntax error ตอบ JSON ใหม่ ห้ามมี newline ใน string'}]).then(function(t2){return JSON.parse(clean(t2));});}
-      return r;
+      var result=tryParse(txt);
+      if(result)return result;
+      // retry with stricter instruction
+      return api([
+        {role:'user',content:prompt},
+        {role:'assistant',content:txt},
+        {role:'user',content:'ตอบ JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี newline ใน string values ทุก string ต้องอยู่บรรทัดเดียว'}
+      ]).then(function(txt2){
+        var r2=tryParse(txt2);
+        if(!r2)throw new Error('AI ตอบกลับผิดรูปแบบ กรุณาลองใหม่');
+        return r2;
+      });
     })
     .then(function(result){
-      try{fetch(SH,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:d.name,classroom:d.room,studentNo:d.num,subjects:subj.join(', '),activities:act.join(', '),gpa:gpa,grade:d.grade,plan:d.plan,dream:d.dream,riasec:riasecCode,faculty1:result.faculties[0]?result.faculties[0].name:'',faculty2:result.faculties[1]?result.faculties[1].name:'',faculty3:result.faculties[2]?result.faculties[2].name:''})});}catch(e){}
-      result._ri=d.ri;onDone(result);
+      try{
+        fetch(SH,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            name:d.name,classroom:d.room,studentNo:d.num,
+            subjects:subj.join(', '),activities:act.join(', '),
+            gpa:gpa,grade:d.grade,plan:d.plan,dream:d.dream,riasec:riasecCode,
+            faculty1:result.faculties[0]?result.faculties[0].name:'',
+            faculty2:result.faculties[1]?result.faculties[1].name:'',
+            faculty3:result.faculties[2]?result.faculties[2].name:''
+          })
+        });
+      }catch(e){}
+      result._ri=d.ri;
+      onDone(result);
     })
     .catch(function(err){alert('เกิดข้อผิดพลาด: '+err.message);})
     .finally(function(){setLoading(false);});
